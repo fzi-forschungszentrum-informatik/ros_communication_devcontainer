@@ -1,0 +1,119 @@
+{
+  "configById": {
+    "3D!7rmuvx": {
+      "cameraState": {
+        "perspective": false,
+        "distance": 147.84593541824472,
+        "phi": 0.00005733012158196959,
+        "thetaOffset": 0,
+        "targetOffset": [
+          -50,
+          -137,
+          2.0224506368403646e-15
+        ],
+        "target": [
+          0,
+          0,
+          0
+        ],
+        "targetOrientation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "fovy": 45,
+        "near": 0.5,
+        "far": 5000
+      },
+      "followMode": "follow-pose",
+      "scene": {},
+      "transforms": {},
+      "topics": {
+        "/costmap/costmap": {
+          "visible": true
+        }
+      },
+      "layers": {},
+      "publish": {
+        "type": "pose",
+        "poseTopic": "/move_base_simple/goal",
+        "pointTopic": "/clicked_point",
+        "poseEstimateTopic": "/initialpose",
+        "poseEstimateXDeviation": 0.5,
+        "poseEstimateYDeviation": 0.5,
+        "poseEstimateThetaDeviation": 0.26179939
+      },
+      "imageMode": {},
+      "foxglovePanelTitle": "Occupancy Grid + Goal Pose Assistance"
+    },
+    "Plot!263ms07": {
+      "paths": [
+        {
+          "value": "/wifi_sl.data",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "label": ""
+        }
+      ],
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "showLegend": true,
+      "legendDisplay": "floating",
+      "showPlotValuesInLegend": false,
+      "isSynced": true,
+      "xAxisVal": "timestamp",
+      "sidebarDimension": 240,
+      "foxglovePanelTitle": "Network Quality"
+    },
+    "StateTransitions!4igk02b": {
+      "paths": [
+        {
+          "value": "/wifi_ap.data",
+          "timestampMethod": "receiveTime"
+        }
+      ],
+      "isSynced": true
+    },
+    "StateTransitions!1haix0z": {
+      "paths": [
+        {
+          "value": "/wifi_ssid.data",
+          "timestampMethod": "receiveTime"
+        }
+      ],
+      "isSynced": true
+    },
+    "Tab!n6epdb": {
+      "activeTabIdx": 0,
+      "tabs": [
+        {
+          "title": "Map",
+          "layout": "3D!7rmuvx"
+        },
+        {
+          "title": "Network",
+          "layout": {
+            "first": "Plot!263ms07",
+            "second": {
+              "first": "StateTransitions!4igk02b",
+              "second": "StateTransitions!1haix0z",
+              "direction": "column"
+            },
+            "direction": "column",
+            "splitPercentage": 69.93590454903328
+          }
+        }
+      ]
+    }
+  },
+  "globalVariables": {},
+  "userNodes": {},
+  "linkedGlobalVariables": [],
+  "playbackConfig": {
+    "speed": 1,
+    "messageOrder": "receiveTime",
+    "timeDisplayMethod": "ROS"
+  },
+  "layout": "Tab!n6epdb"
+}

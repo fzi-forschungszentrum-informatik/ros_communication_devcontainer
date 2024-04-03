@@ -1,0 +1,5 @@
+// Fill out data for your machine
+{
+    "project_path": "/home/carpc/ros_communication_devcontainer",
+    "ssh_account_key": "shuttle_ella account"
+}

@@ -1,0 +1,7 @@
+
+{
+    // name of the image of this devcontainer
+    "dev_image_name": "ros-communication_image",
+    // name of the container of this devcontainer
+    "dev_container_name": "ros-communication_container"
+}

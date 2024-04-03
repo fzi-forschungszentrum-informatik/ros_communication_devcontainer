@@ -1,0 +1,15 @@
+// See https://containers.dev/implementors/json_reference/
+{
+	"build": { 
+		"dockerfile": "../docker/Dockerfile",
+	},
+    "overrideCommand": false,
+	"workspaceMount": "",
+	"workspaceFolder": "/workspace/vsc-config/container.code-workspace",
+	"extensions": [
+        // Optional:
+        "ms-iot.vscode-ros",
+		"mhutchie.git-graph",
+	],
+#runArgs
+}

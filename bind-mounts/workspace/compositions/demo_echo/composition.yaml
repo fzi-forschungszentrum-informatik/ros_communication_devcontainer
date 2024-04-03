@@ -1,0 +1,15 @@
+composition:
+  - module_path: machines.machine_a.demo_echo.test_machine_script
+    function: test_machine_script
+    arguments:
+      connect_to_target: true
+      external_terminal: true
+      test_arg_a: "some_custom_test_argument"
+      test_arg_b: "another_test_argument"
+  - module_path: machines.machine_b.demo_echo.test_machine_script
+    function: test_machine_script
+    arguments:
+      connect_to_target: true
+      external_terminal: true
+      test_arg_a: "lorem"
+      test_arg_b: "ipsum"

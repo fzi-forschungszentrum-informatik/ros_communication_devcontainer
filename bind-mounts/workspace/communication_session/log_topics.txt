@@ -1,0 +1,13 @@
+/statistics
+/master_discovery/changes
+/master_discovery/linkstats
+/speed_test/ping_latency_ms
+/speed_test/download_mbps
+/speed_test/upload_mbps
+/traffic_monitor/upload_rate_mbps
+/traffic_monitor/download_rate_mbps
+/traffic_monitor/total_upload_mb
+/traffic_monitor/total_download_mb
+/wifi_ap
+/wifi_sl
+/wifi_ssid

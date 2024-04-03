@@ -1,0 +1,3 @@
+std_msgs/Header header
+nav_msgs/MapMetaData info
+std_msgs/UInt8MultiArray compressed_data

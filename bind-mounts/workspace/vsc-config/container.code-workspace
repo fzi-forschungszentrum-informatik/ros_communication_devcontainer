@@ -1,0 +1,11 @@
+{
+	"folders": [
+        {
+            "path": "/workspace"
+        },
+        {
+            "name": "catkin-ws-src_bind-mount",
+            "path": "/home/myuser/catkin_ws/src"
+        },
+	],
+}

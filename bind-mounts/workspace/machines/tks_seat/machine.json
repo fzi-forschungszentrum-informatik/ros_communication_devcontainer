@@ -1,0 +1,5 @@
+// Fill out data for your machine
+{
+    "project_path": "/home/go914/dev/ros_communication_devcontainer",
+    "ssh_account_key": "tks-seat account"
+}

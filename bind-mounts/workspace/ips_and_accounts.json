@@ -1,0 +1,11 @@
+// Fill out data for your machines
+{
+  "machine_a": {
+    "account": "", // e.g. "user@machine_name"
+    "ip": "" // e.g. "000.000.000.000"
+  },
+  "machine_b": {
+    "account": "", // e.g. "user@machine_name"
+    "ip": "" // e.g. "000.000.000.000"
+  }
+}

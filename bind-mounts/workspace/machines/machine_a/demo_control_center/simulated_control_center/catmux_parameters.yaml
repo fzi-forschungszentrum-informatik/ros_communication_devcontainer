@@ -1,0 +1,3 @@
+ROS_MASTER_PORT: 11312
+CUSTOM_1: 'roslaunch foxglove_bridge foxglove_bridge.launch'
+# CUSTOM_2: 'rostopic pub -r 1 /move_base_simple/goal geometry_msgs/PoseStamped "$(cat /pose_msg.txt)"'
