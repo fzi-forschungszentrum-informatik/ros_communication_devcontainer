@@ -61,13 +61,26 @@ def run(additional_run_arguments='-it --rm', run_command='bash'):
     # Use shlex.split to safely parse additional_run_arguments and run_command
     additional_run_arguments_parts = shlex.split(additional_run_arguments)
     run_command_parts = shlex.split(run_command)
-    
+
+    mount_args = []
+    mount_config_file = f"{project_dir}/config/mount.json"
+    if os.path.exists(mount_config_file):
+        mount_config=json_to_dict(mount_config_file)
+        print(mount_config)
+        if 'session_mount' in mount_config:
+            mount_args.append("-v")
+            mount_args.append(f"{mount_config['session_mount']}:/session")
+        if 'ros_ws_mount' in mount_config:
+            mount_args.append("-v")
+            mount_args.append(f"{mount_config['ros_ws_mount']}:/home/myuser/catkin_ws/src")
+
     # Construct the complete Docker command
     docker_command = [
         'docker',
         'run',
         *default_run_args,
         *additional_run_arguments_parts,
+        *mount_args,
         project_config['dev_image_name'],
         *run_command_parts
     ]

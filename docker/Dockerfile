@@ -66,6 +66,24 @@ RUN sudo apt-get update && sudo apt-get -y install \
     ros-noetic-fkie-multimaster \
   && sudo rm -rf /var/lib/apt/lists/*
 
+# # foxglove
+# RUN export DEBIAN_FRONTEND=noninteractive && \
+#     sudo apt-get update && sudo apt-get install -y --no-install-recommends \
+#     wget \
+#     libnotify4 \
+#     xdg-utils \
+#     libappindicator3-1 \
+#     gdebi-core \
+#     && sudo rm -rf /var/lib/apt/lists/*
+# RUN wget https://get.foxglove.dev/desktop/latest/foxglove-studio-2.7.0-linux-amd64.deb -P ~ \
+#     && sudo apt-get install -y ~/foxglove-studio-*.deb \
+#     && rm ~/foxglove-studio-*.deb
+
+# Foxglove
+RUN sudo apt-get update && sudo apt-get -y install \
+    ros-$ROS_DISTRO-foxglove-bridge \
+  && sudo rm -rf /var/lib/apt/lists/*
+
 # Install gnome-terminal to be able to launch a terminal from inside the docker
 # - install dependencies
     # dbus: 

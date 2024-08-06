@@ -37,18 +37,39 @@
 #
 # ---------------------------------------------------------------------
 
-import os
+import argparse
+import yaml
+import subprocess
 import sys
+import os
 
-current_dir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(current_dir)
+sys.path.append(os.path.dirname(__file__))
+from create_session_yaml import create_session_yaml
 
-from re_generate_docker_run_args import re_generate_docker_run_args
-from re_generate_devcontainer_json import re_generate_devcontainer_json
+def create_session(dir_path):
 
-def re_init():
-    re_generate_docker_run_args()
-    re_generate_devcontainer_json()
+    create_session_yaml(dir_path)
+
+    # Define the command and arguments
+    command = "/home/myuser/.local/bin/catmux_create_session"
+    yaml_file_path = f'{dir_path}/.session_readonly.yaml'
+    session_name_arg = "--session_name"
+    session_name = "ros_communication"
+
+    # Combine them into a single command
+    full_command = [command, yaml_file_path, session_name_arg, session_name, "--overwrite", f'dir_path={dir_path}']
+
+    # Execute the command
+    try:
+        subprocess.run(full_command, check=True)
+        print("Command executed successfully.")
+    except subprocess.CalledProcessError as e:
+        print(f"An error occurred while executing the command: {e}")
 
 if __name__ == "__main__":
-    re_init()
+    parser = argparse.ArgumentParser(description='Script that creates a catmux session according to the local config.')
+    parser.add_argument('-d', '--dir_path', required=True, help='Path to the directory with the config.yaml')
+    args = parser.parse_args()
+
+    # Use **vars(args) to convert argparse.Namespace to a dict, filtering out None values
+    create_session(**{k: v for k, v in vars(args).items() if v is not None})

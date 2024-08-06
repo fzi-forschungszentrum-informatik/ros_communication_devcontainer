@@ -49,8 +49,15 @@ from utils.devcontainer_utils import json_to_dict
 def build():
     project_config = json_to_dict(f"{project_dir}/config/project.json")
 
+    # Retrieve the current user's UID and GID
+    user_uid = os.getuid()
+    user_gid = os.getgid()
+
+    # Prepare the Docker build arguments list
     docker_build_args = [
         '-t', project_config['dev_image_name'],
+        '--build-arg', f"USER_UID={user_uid}",
+        '--build-arg', f"USER_GID={user_gid}",
         '--build-arg', f"SSH_AUTH_SOCK={os.environ.get('SSH_AUTH_SOCK')}"
     ]
 

@@ -37,18 +37,31 @@
 #
 # ---------------------------------------------------------------------
 
+import argparse
 import os
 import sys
 
-current_dir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(current_dir)
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))) # add ws to sys
+import helpers.ws_utils as ws_utils
 
-from re_generate_docker_run_args import re_generate_docker_run_args
-from re_generate_devcontainer_json import re_generate_devcontainer_json
-
-def re_init():
-    re_generate_docker_run_args()
-    re_generate_devcontainer_json()
+def resolve_keys(key_string):
+    # Check if the string contains a semicolon
+    if '+' in key_string:
+        # Split the string by semicolon and then split each part by spaces
+        keys = [part.strip().split() for part in key_string.split('+')]
+    else:
+        # Split the string by spaces
+        keys = [key_string.split()]
+    resolved_keys = [ws_utils.get_ip_or_account(key) for key in keys]
+    resolved_keys_str = " ".join(resolved_keys)
+    return resolved_keys_str
 
 if __name__ == "__main__":
-    re_init()
+    parser = argparse.ArgumentParser(description='Script that resolves keys of the ips_and_accounts.json')
+    parser.add_argument('-k', '--key_string', required=True, help='String that contains keys')
+    args = parser.parse_args()
+
+    # Use **vars(args) to convert argparse.Namespace to a dict, filtering out None values
+    resolved_key_str = resolve_keys(**{k: v for k, v in vars(args).items() if v is not None})
+
+    print(resolved_key_str)  # This will output the value to stdout, which can be captured in a shell

@@ -68,7 +68,7 @@ The provided demonstrations are designed for ease of use and quick setup, specif
 <details>
 <summary>Configuring Machine Data</summary>
 
-- Begin by entering necessary data in `bind-mounts/workspace/ips_and_accounts.json` and the specific `machine.json` files for `machine_a` and `machine_b`. Ensure this data is synchronized to the other machine via Git to facilitate seamless communication.
+- Begin by entering necessary data in `mnt/ws/ips_and_accounts.json` and the specific `machine.json` files for `machine_a` and `machine_b`. Ensure this data is synchronized to the other machine via Git to facilitate seamless communication.
 
 </details>
 
@@ -79,7 +79,7 @@ A simple yet powerful demonstration of the connection and basic functionality of
 
 **How to Launch:**
 
-- Execute `bind-mounts/workspace/compositions/demo_echo/run.py` to start the demo.
+- Execute `mnt/ws/compositions/demo_echo/run.py` to start the demo.
   - Two gnome-terminals will launch, one for each machine.
   - These terminals will establish an SSH connection to the corresponding machine and execute a script that outputs basic information, confirming the successful connection and functionality.
 
@@ -99,7 +99,7 @@ Experience a real-world application with our Demo Remote Assist, simulating remo
 
 **Steps to Test:**
 
-- Start the demo by running `bind-mounts/workspace/compositions/demo_remote_assist/run.py`.
+- Start the demo by running `mnt/ws/compositions/demo_remote_assist/run.py`.
    - This launches 6 windows, split between the control center (machine a), the vehicle (machine b) and the host machine.
    - **Vehicle Side**:
      - One terminal plays a ROS bag containing the occupancy grid.
@@ -126,8 +126,8 @@ For those looking to extend the communication functionalities beyond the provide
 <summary>Adding New Machines</summary>
 
 - Perform the [basic setup](#basic-setup-for-connected-machines) for each new machine.
-- Update `bind-mounts/workspace/ips_and_accounts.json` with the new machine's details.
-- Create a new directory and `machine.json` file under `bind-mounts/workspace/machines/[machine_name]`.
+- Update `mnt/ws/ips_and_accounts.json` with the new machine's details.
+- Create a new directory and `machine.json` file under `mnt/ws/machines/[machine_name]`.
 
 </details>
 
@@ -150,10 +150,10 @@ A composition starts multiple gnome-terminals, connects to specific machines, an
 If you wish to cite the ROS Communication DevContainer in your work, please use the following citation:
 
 ```latex
-@InProceedings{gontscharow_scalable,
-  author    = {Gontscharow, Martin and Doll Jens and Schotschneider, Albert and Bogdoll, Daniel and Orf, Stefan and Jestram, Johannes and Zofka, Marc and Z\"{o}llner, J. Marius},
+@InProceedings{TODO,
+  author    = {Gontscharow, Martin and Doll Jens and Schotschneider, Albert and Bogdoll, Daniel and Orf Stefan and Jestram Johannes and Zofka, Marc and Z\"{o}llner, J. Marius},
   title     = {{Scalable Remote Operation for Autonomous Vehicles: Integration of Cooperative Perception and Open Source Communication}},
-  booktitle = {2024 IEEE Intelligent Vehicles Symposium (IV)},
+  booktitle = {TODO},
   year      = {2024}
 }
 ```

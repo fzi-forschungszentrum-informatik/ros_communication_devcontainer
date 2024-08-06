@@ -1,4 +1,3 @@
-
 {
     // name of the image of this devcontainer
     "dev_image_name": "ros-communication_image",

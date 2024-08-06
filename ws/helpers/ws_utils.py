@@ -37,18 +37,45 @@
 #
 # ---------------------------------------------------------------------
 
+import json
+import re
 import os
-import sys
 
-current_dir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(current_dir)
+def remove_comments(json_like):
+    """Remove C-style comments from a JSON-like string."""
+    pattern = r'//.*?$|/\*.*?\*/'
+    return re.sub(pattern, '', json_like, flags=re.DOTALL | re.MULTILINE)
 
-from re_generate_docker_run_args import re_generate_docker_run_args
-from re_generate_devcontainer_json import re_generate_devcontainer_json
+def json_to_dict(path_to_json):
+    with open(path_to_json, 'r') as file:
+        content = file.read()
 
-def re_init():
-    re_generate_docker_run_args()
-    re_generate_devcontainer_json()
+        content_no_comments = remove_comments(content)
+        # Return parsed JSON
+        return json.loads(content_no_comments)
 
-if __name__ == "__main__":
-    re_init()
+def get_ip_or_account(key, path_to_ws="/ws"):
+    # Load target account 
+    # TODO: Fix
+    # ips_and_accounts = json_to_dict(f'{path_to_ws}/ips_and_accounts.json')
+    ips_and_accounts = json_to_dict('/session/shared/data_dict.json')
+    if isinstance(key, list):
+        # Nested parameter case
+        result = ips_and_accounts
+        for key in key:
+            if key in result:
+                result = result[key]
+            else:
+                raise KeyError(f"Key {key} not found in configuration.")
+    elif isinstance(key, str):
+        # Top-level parameter case
+        if key in ips_and_accounts:
+            result = ips_and_accounts[key]
+        else:
+            raise KeyError(f"Key {key} not found in configuration.")
+    else:
+        raise TypeError("target_account_key must be either a string or a list of strings.")
+    return result
+
+def get_host_project_path():
+    return os.environ.get("PROJECT_PATH")

@@ -5,7 +5,7 @@
 	},
     "overrideCommand": false,
 	"workspaceMount": "",
-	"workspaceFolder": "/workspace/vsc-config/container.code-workspace",
+	"workspaceFolder": "/ws/vsc-config/container.code-workspace",
 	"extensions": [
         // Optional:
         "ms-iot.vscode-ros",
