@@ -150,10 +150,10 @@ A composition starts multiple gnome-terminals, connects to specific machines, an
 If you wish to cite the ROS Communication DevContainer in your work, please use the following citation:
 
 ```latex
-@InProceedings{TODO,
-  author    = {Gontscharow, Martin and Doll Jens and Schotschneider, Albert and Bogdoll, Daniel and Orf Stefan and Jestram Johannes and Zofka, Marc and Z\"{o}llner, J. Marius},
+@InProceedings{gontscharow_scalable,
+  author    = {Gontscharow, Martin and Doll Jens and Schotschneider, Albert and Bogdoll, Daniel and Orf, Stefan and Jestram, Johannes and Zofka, Marc and Z\"{o}llner, J. Marius},
   title     = {{Scalable Remote Operation for Autonomous Vehicles: Integration of Cooperative Perception and Open Source Communication}},
-  booktitle = {TODO},
+  booktitle = {2024 IEEE Intelligent Vehicles Symposium (IV)},
   year      = {2024}
 }
 ```
