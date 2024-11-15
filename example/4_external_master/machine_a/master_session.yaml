@@ -1,0 +1,11 @@
+---
+windows:
+  - name: CORE
+    splits:
+      - commands:
+        - roscore
+    delay: 4
+  - name: LISTEN
+    splits:
+      - commands:
+        - rostopic echo /chatter

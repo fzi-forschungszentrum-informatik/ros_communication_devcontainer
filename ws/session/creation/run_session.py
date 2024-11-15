@@ -32,49 +32,50 @@
 # !\file
 #
 # \author  Martin Gontscharow <gontscharow@fzi.de>
-# \date    2024-04-03
+# \date    2024-11-13
 #
 #
 # ---------------------------------------------------------------------
 
-import os
-import sys
-import subprocess
-import shlex
 import argparse
+import yaml
+import subprocess
+import sys
+import os
 
-from build import main as build
+ws_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+sys.path.append(ws_path)
 
-project_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-sys.path.append(project_dir)
+from session.creation.create_session_yaml import main as create_session_yaml
 
-from utils.getters import *
 
-def run(additional_run_arguments='-it', run_command='bash'):
-    # Use shlex.split to safely parse additional_run_arguments and run_command
-    additional_run_arguments_parts = shlex.split(additional_run_arguments)
-    run_command_parts = shlex.split(run_command)
-    
-    docker_command = [
-        'docker',
-        'run',
-        *get_docker_run_args(),
-        *additional_run_arguments_parts,
-        get_image_name(),
-        *run_command_parts
-    ]
+def main(session_dir):
 
-    print("Executing Docker command:", ' '.join(docker_command))
-    subprocess.run(docker_command, check=True)
+    create_session_yaml(session_dir)
 
-def main(**run_args):
-    build()
-    run(**run_args)
+    # Define the command and arguments
+    command = "/home/myuser/.local/bin/catmux_create_session"
+    yaml_file_path = f'{session_dir}/.session_readonly.yaml'
+    session_name_arg = "--session_name"
+
+    # get name
+    spec_file = os.path.join(session_dir, 'session_specification.yaml')
+    with open(spec_file, 'r') as f: spec = yaml.safe_load(f)
+    session_name = spec.get('name', 'ros_communication')
+
+    # Combine them into a single command
+    full_command = [command, yaml_file_path, session_name_arg, session_name, "--overwrite", f'dir_path={session_dir}']
+
+    # Execute the command
+    try:
+        subprocess.run(full_command, check=True)
+        print("Command executed successfully.")
+    except subprocess.CalledProcessError as e:
+        print(f"An error occurred while executing the command: {e}")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run a Docker container with specified arguments.")
-    parser.add_argument('-a', '--additional_run_arguments', help='Docker run arguments')
-    parser.add_argument('-c', '--run_command', help='Command to run in the Docker container')
+    parser = argparse.ArgumentParser(description='Script that creates a catmux session according to the local config.')
+    parser.add_argument('-s', '--session-dir', required=True, help='Path to the directory with the config.yaml')
     args = parser.parse_args()
 
     # Use **vars(args) to convert argparse.Namespace to a dict, filtering out None values

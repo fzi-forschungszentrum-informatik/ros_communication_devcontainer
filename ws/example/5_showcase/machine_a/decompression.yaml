@@ -1,0 +1,4 @@
+decompression:
+  - topic_regex: "/costmap/costmap_compressed$"
+    msg_type: "nav_msgs/OccupancyGrid"
+    remove_suffix: "_compressed"

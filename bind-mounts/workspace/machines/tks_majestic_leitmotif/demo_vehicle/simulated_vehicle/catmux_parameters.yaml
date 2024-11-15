@@ -1,2 +1,0 @@
-ROS_MASTER_PORT: 11312
-CUSTOM_1: 'rosbag play --clock --loop --rate 1 /costmap.bag'

@@ -1,18 +1,7 @@
-__pycache__
-
 # ignore local system specific settings
-/.devcontainer/devcontainer.json
-/docker/run_args.json
+.devcontainer/devcontainer.json
+config/local.json
+config/data_dict.json
 
-# ignore large data
-bind-mounts/workspace/data/*
-!bind-mounts/workspace/data/.gitkeep
-**log*.bag
-**log*.bag.active
-
-# ignore sensitiv data
-bind-mounts/workspace/vpn/*
-!bind-mounts/workspace/vpn/start_vpn_template.sh
-
-# ignore depreciated files
-archive
+# ignore temporary data
+__pycache__

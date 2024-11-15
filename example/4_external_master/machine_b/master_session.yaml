@@ -1,0 +1,12 @@
+---
+windows:
+  - name: CORE
+    splits:
+      - commands:
+        - roscore
+    delay: 4
+  - name: TALK
+    splits:
+      - commands:
+        - |
+          rostopic pub -r 1 /chatter std_msgs/String "data: 'hello from talker'"

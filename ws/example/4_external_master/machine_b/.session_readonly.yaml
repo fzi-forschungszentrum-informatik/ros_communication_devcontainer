@@ -1,0 +1,97 @@
+before-command: {}
+common:
+  before_commands:
+  - if [ '${before_command}' != "None" ]; then ${before_command}; fi
+  - if [ '${ros_ip_key}' != "None" ]; then export ROS_IP=$(/ws/session/content/get_data_dict_entries.py
+    -k "${ros_ip_key}") && echo ${ROS_IP}; fi
+  - export ROS_MASTER_URI=http://$(/ws/session/content/get_data_dict_entries.py -k
+    "${ros_master_hostname_key}"):${ros_master_port}
+parameters:
+  before_command: null
+  check_host: true
+  dir_path: null
+  discover_host_keys: machine_a_ip
+  master_discovery: true
+  master_sync: false
+  rec: false
+  rec_command_1: rosbag record --split --size=5120 -o ${dir_path}/rec_sync_ -e '(.*)_sync$'
+  rec_command_2: null
+  rec_command_3: null
+  rec_command_4: null
+  remove_target_prefix_incoming: null
+  ros_core: false
+  ros_ip_key: machine_b_ip
+  ros_master_hostname_key: localhost
+  ros_master_port: 11311
+  rpc_port: 11611
+  session_dir: /ws/example/4_external_master/machine_b
+  sync_remote_nodes: false
+  sync_suffix: _sync
+  target_prefix_outgoing: null
+  topic_list_paths_incoming: null
+  topic_list_paths_outgoing: /ws/example/4_external_master/talker_topic.txt
+  topic_list_prefixes_incoming: ''
+  topic_list_prefixes_outgoing: null
+  topic_monitor: false
+  topic_relay_incoming: false
+  topic_relay_outgoing: true
+windows:
+- delay: 2.5
+  if: ros_core
+  layout: even-vertical
+  name: CORE
+  splits:
+  - commands:
+    - roscore --port ${ros_master_port}
+  - commands:
+    - sleep 2
+    - rosparam set enable_statistics true
+- delay: 1
+  if: rec
+  layout: even-vertical
+  name: REC
+  splits:
+  - commands:
+    - if [ "${rec_command_1}" == "None" ]; then exit; fi
+    - ${rec_command_1}
+  - commands:
+    - if [ "${rec_command_2}" == "None" ]; then exit; fi
+    - ${rec_command_2}
+  - commands:
+    - if [ "${rec_command_3}" == "None" ]; then exit; fi
+    - ${rec_command_3}
+  - commands:
+    - if [ "${rec_command_4}" == "None" ]; then exit; fi
+    - ${rec_command_4}
+- if: master_discovery
+  name: DISC
+  splits:
+  - commands:
+    - /ws/session/content/base/start_fkie_master_discovery.py _discover_host_keys:="${discover_host_keys}"
+      _rpc_port:=${rpc_port}
+- if: master_sync
+  name: SYNC
+  splits:
+  - commands:
+    - /ws/session/content/base/start_fkie_master_sync.py _check_host:="${check_host}"
+      _sync_remote_nodes:="${sync_remote_nodes}" _topic_list_prefixes:="${topic_list_prefixes_incoming}"
+      _topic_list_paths:="${topic_list_paths_incoming}" _sync_suffix:="${sync_suffix}"
+- if: topic_relay_incoming
+  name: IN
+  splits:
+  - commands:
+    - /ws/session/content/base/topic_relay_incoming.py _topic_list_prefixes:="${topic_list_prefixes_incoming}"
+      _remove_target_prefix:="${remove_target_prefix_incoming}" _topic_list_paths:="${topic_list_paths_incoming}"
+      _sync_suffix:="${sync_suffix}"
+- if: topic_relay_outgoing
+  name: OUT
+  splits:
+  - commands:
+    - /ws/session/content/base/topic_relay_outgoing.py _topic_list_prefixes:="${topic_list_prefixes_outgoing}"
+      _target_prefix:="${target_prefix_outgoing}" _topic_list_paths:="${topic_list_paths_outgoing}"
+      _sync_suffix:="${sync_suffix}"
+- if: topic_monitor
+  name: TOP
+  splits:
+  - commands:
+    - /ws/session/content/base/topic_monitor.py

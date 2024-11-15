@@ -1,0 +1,11 @@
+parameters:
+  ros_ip_key: machine_a_ip
+
+  topic_list_paths_incoming: /ws/example/5_showcase/topics_b_to_a.txt
+  topic_list_paths_outgoing: /ws/example/5_showcase/topics_a_to_b.txt
+
+windows:
+  - name: DECO
+    splits:
+      - commands:
+        - /ws/session/content/compression/universal_decompressor.py _config:=/ws/example/5_showcase/machine_a/decompression.yaml

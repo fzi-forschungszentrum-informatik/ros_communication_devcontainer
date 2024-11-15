@@ -32,50 +32,33 @@
 # !\file
 #
 # \author  Martin Gontscharow <gontscharow@fzi.de>
-# \date    2024-04-03
+# \date    2024-11-13
 #
 #
 # ---------------------------------------------------------------------
 
 import os
 import sys
-import subprocess
-import shlex
-import argparse
-
-from build import main as build
 
 project_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(project_dir)
 
+from utils.files import *
 from utils.getters import *
 
-def run(additional_run_arguments='-it', run_command='bash'):
-    # Use shlex.split to safely parse additional_run_arguments and run_command
-    additional_run_arguments_parts = shlex.split(additional_run_arguments)
-    run_command_parts = shlex.split(run_command)
-    
-    docker_command = [
-        'docker',
-        'run',
-        *get_docker_run_args(),
-        *additional_run_arguments_parts,
-        get_image_name(),
-        *run_command_parts
-    ]
 
-    print("Executing Docker command:", ' '.join(docker_command))
-    subprocess.run(docker_command, check=True)
+def main():
+    # Get the directory of the project relative to this script
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_dir = os.path.dirname(script_dir)
 
-def main(**run_args):
-    build()
-    run(**run_args)
+    # Save the contents of the vsc-template-files
+    devcontainer_template_file = os.path.join(project_dir, "config/devcontainer.json.template")
+    devcontainer_file = os.path.join(project_dir, ".devcontainer/devcontainer.json")
+
+    substitutions = { "#docker_run_args": str(get_docker_run_args()).replace("'", '"')[1:-1] }
+
+    generate_file_from_template(devcontainer_template_file, devcontainer_file, substitutions)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run a Docker container with specified arguments.")
-    parser.add_argument('-a', '--additional_run_arguments', help='Docker run arguments')
-    parser.add_argument('-c', '--run_command', help='Command to run in the Docker container')
-    args = parser.parse_args()
-
-    # Use **vars(args) to convert argparse.Namespace to a dict, filtering out None values
-    main(**{k: v for k, v in vars(args).items() if v is not None})
+    main()

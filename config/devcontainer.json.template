@@ -5,11 +5,14 @@
 	},
     "overrideCommand": false,
 	"workspaceMount": "",
-	"workspaceFolder": "/workspace/vsc-config/container.code-workspace",
+	"workspaceFolder": "/ws/vsc-config/container.code-workspace",
+	"initializeCommand": ".devcontainer/re_generate_devcontainer_json.py",
 	"extensions": [
         // Optional:
         "ms-iot.vscode-ros",
 		"mhutchie.git-graph",
 	],
-#runArgs
+	"runArgs": [
+		#docker_run_args,
+	]
 }

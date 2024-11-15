@@ -1,0 +1,10 @@
+parameters:
+  ros_master_port: 11312
+  rpc_port: 11612
+
+windows:
+  - name: TALK
+    splits:
+      - commands:
+        - |
+          rostopic pub /chatter std_msgs/String "data: 'hello from talker'"

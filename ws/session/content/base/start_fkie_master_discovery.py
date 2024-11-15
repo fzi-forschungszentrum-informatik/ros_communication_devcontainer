@@ -32,50 +32,52 @@
 # !\file
 #
 # \author  Martin Gontscharow <gontscharow@fzi.de>
-# \date    2024-04-03
+# \date    2024-11-13
 #
 #
 # ---------------------------------------------------------------------
 
 import os
-import sys
+import rospy
 import subprocess
-import shlex
-import argparse
+import sys
 
-from build import main as build
+ws_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
+sys.path.append(ws_path)
 
-project_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-sys.path.append(project_dir)
+from session.content.get_data_dict_entries import main as get_data_dict_entries
 
-from utils.getters import *
+def start_fkie_master_discovery(rpc_port, discover_host_keys):
 
-def run(additional_run_arguments='-it', run_command='bash'):
-    # Use shlex.split to safely parse additional_run_arguments and run_command
-    additional_run_arguments_parts = shlex.split(additional_run_arguments)
-    run_command_parts = shlex.split(run_command)
-    
-    docker_command = [
-        'docker',
-        'run',
-        *get_docker_run_args(),
-        *additional_run_arguments_parts,
-        get_image_name(),
-        *run_command_parts
+    command = [
+        'rosrun',
+        'fkie_master_discovery',
+        'master_discovery',
+        "_hide_services:=['/*']",
     ]
 
-    print("Executing Docker command:", ' '.join(docker_command))
-    subprocess.run(docker_command, check=True)
+    if rpc_port:
+        command.append(f'_rpc_port:={rpc_port}')
 
-def main(**run_args):
-    build()
-    run(**run_args)
+    if discover_host_keys:
+        robot_host_list = get_data_dict_entries(discover_host_keys)
+        robot_hosts = ','.join(robot_host_list)  # Convert list to a comma-separated string
+        command.append(f'_robot_hosts:=[{robot_hosts}]')
+
+    # Print the command
+    print("Executing command:", ' '.join(command))
+    
+    # Start the synchronization process
+    subprocess.Popen(command)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run a Docker container with specified arguments.")
-    parser.add_argument('-a', '--additional_run_arguments', help='Docker run arguments')
-    parser.add_argument('-c', '--run_command', help='Command to run in the Docker container')
-    args = parser.parse_args()
+    rospy.init_node('start_fkie_master_discovery', anonymous=True)
 
-    # Use **vars(args) to convert argparse.Namespace to a dict, filtering out None values
-    main(**{k: v for k, v in vars(args).items() if v is not None})
+    # Retrieve parameters from ROS parameter server
+    rpc_port = rospy.get_param('~rpc_port', None)
+    discover_host_keys = rospy.get_param('~discover_host_keys', None)
+    print("discover_host_keys:", str(discover_host_keys))
+
+    start_fkie_master_discovery(rpc_port, discover_host_keys)
+
+    rospy.spin()  # Keep the node running

@@ -1,0 +1,1 @@
+/costmap/costmap_compressed

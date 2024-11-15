@@ -1,0 +1,11 @@
+parameters:
+  ros_ip_key: machine_b_ip
+
+  topic_list_paths_incoming: /ws/example/5_showcase/topics_a_to_b.txt
+  topic_list_paths_outgoing: /ws/example/5_showcase/topics_b_to_a.txt
+
+windows:
+  - name: COMP
+    splits:
+      - commands:
+        - /ws/session/content/compression/universal_compressor.py _config:=/ws/example/5_showcase/machine_b/compression.yaml

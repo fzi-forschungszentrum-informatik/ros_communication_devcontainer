@@ -1,10 +1,6 @@
 # Use the official image for ROS Noetic under Ubuntu 20.04
 FROM osrf/ros:noetic-desktop-full-focal
 
-####################################################################################################
-############# Dockerfile Settings ##################################################################
-####################################################################################################
-
 # Add non-root user
 ENV USERNAME=myuser
 ARG USER_UID=1000
@@ -32,7 +28,7 @@ RUN sudo apt-get update && sudo apt-get -y install \
 
 ## Source ROS in bash
 RUN echo 'source /opt/ros/$ROS_DISTRO/setup.bash' >> /home/${USERNAME}/.bashrc
-RUN echo 'source ~/catkin_ws/devel/setup.bash' >> /home/${USERNAME}/.bashrc
+RUN echo '[ -f ~/catkin_ws/devel/setup.bash ] && source ~/catkin_ws/devel/setup.bash' >> /home/${USERNAME}/.bashrc
 
 # catmux
 RUN sudo apt-get update && sudo apt-get -y install \
@@ -88,18 +84,3 @@ RUN dbus-launch gsettings set org.gnome.Terminal.Legacy.Settings default-show-me
     done
 # Note about dbus-launch: It's used to start a D-Bus session bus instance. This is necessary because gsettings
 # and dconf require an active D-Bus session to communicate with the gsettings backend.
-
-# Install Docker CLI (DooD)
-RUN sudo apt-get update && \
-    sudo apt-get install -y curl && \
-    curl -fsSL https://get.docker.com -o get-docker.sh && \
-    sh get-docker.sh
-# Clean up
-RUN sudo apt-get clean && \
-    sudo rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /get-docker.sh
-
-# Set Entry Point
-COPY entrypoint.sh /home/${USERNAME}
-ENTRYPOINT [ "/home/myuser/entrypoint.sh" ]
-CMD [ "sleep", "infinity" ]
-

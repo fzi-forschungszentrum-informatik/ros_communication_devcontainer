@@ -1,0 +1,10 @@
+{
+    "static_docker_run_args": [
+        "-u", "#uid:#gid",
+        "--name", "#container_name",
+        "--rm",
+        "-v", "#project_dir/ws:/ws",
+        "-v", "#data_dict:/data_dict.json",
+        "--network", "#network"
+	]
+}

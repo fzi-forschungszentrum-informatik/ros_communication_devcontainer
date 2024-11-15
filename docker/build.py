@@ -44,14 +44,13 @@ import subprocess
 project_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(project_dir)
 
-from utils.devcontainer_utils import json_to_dict
+from utils.getters import *
 
-def build():
-    project_config = json_to_dict(f"{project_dir}/config/project.json")
-
+def main():
     docker_build_args = [
-        '-t', project_config['dev_image_name'],
-        '--build-arg', f"SSH_AUTH_SOCK={os.environ.get('SSH_AUTH_SOCK')}"
+        '--build-arg', f"USER_UID={os.getuid()}",
+        '--build-arg', f"USER_GID={os.getgid()}",
+        '-t', get_image_name()
     ]
 
     docker_command = [
@@ -62,4 +61,4 @@ def build():
     subprocess.run(docker_command, check=True)
 
 if __name__ == "__main__":
-    build()
+    main()

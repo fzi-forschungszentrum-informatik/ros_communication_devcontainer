@@ -13,7 +13,10 @@ source /opt/ros/${ROS_DISTRO}/setup.bash
 # see: https://github.com/moby/moby/issues/2259
 sudo chown -R myuser ~/catkin_ws
 cd ~/catkin_ws
+rm -f ~/catkin_ws/src/CMakeLists.txt 
 catkin_make
+
+source ~/.bashrc
 
 # run the CMD passed as command-line arguments
 exec "$@"

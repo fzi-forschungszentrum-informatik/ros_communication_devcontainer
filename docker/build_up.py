@@ -37,10 +37,10 @@
 #
 # ---------------------------------------------------------------------
 
-from build_run import build_run
+from build_run import main as build_run
 
-def build_up():
-    build_run(additional_run_arguments="-d --rm", run_command="tail -f /dev/null")
+def main():
+    build_run(additional_run_arguments="-d", run_command="tail -f /dev/null")
 
 if __name__ == "__main__":
-    build_up()
+    main()

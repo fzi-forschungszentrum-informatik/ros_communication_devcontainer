@@ -1,0 +1,4 @@
+session_plugins:
+  - /ws/example/4_external_master/machine_a/plugin.yaml
+  - /ws/example/4_external_master/common_plugin.yaml
+  - /ws/session/content/base/session_plugin_base.yaml

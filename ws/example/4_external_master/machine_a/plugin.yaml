@@ -1,0 +1,10 @@
+parameters:
+  ros_ip_key: machine_a_ip
+  discover_host_keys: machine_b_ip
+
+  master_sync: true
+  topic_list_paths_incoming: /ws/example/4_external_master/talker_topic.txt
+  sync_remote_nodes: true
+  check_host: false
+
+  topic_relay_incoming: true

@@ -1,5 +1,0 @@
-// Fill out data for your machine
-{
-    "project_path": "", // path/to/ros_communication_devcontainer. Neccessary to control the ros_communication_devcontainer of another machine
-    "ssh_account_key": "machine_b account"
-}

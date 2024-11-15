@@ -37,45 +37,62 @@
 #
 # ---------------------------------------------------------------------
 
-import os
-import sys
-import subprocess
-import shlex
 import argparse
+import json
+import re
 
-from build import main as build
+def remove_comments(json_like):
+    """Remove C-style comments from a JSON-like string."""
+    pattern = r'//.*?$|/\*.*?\*/'
+    return re.sub(pattern, '', json_like, flags=re.DOTALL | re.MULTILINE)
 
-project_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-sys.path.append(project_dir)
+def json_to_dict(path_to_json):
+    with open(path_to_json, 'r') as file:
+        content = file.read()
 
-from utils.getters import *
+        content_no_comments = remove_comments(content)
+        # Return parsed JSON
+        return json.loads(content_no_comments)
 
-def run(additional_run_arguments='-it', run_command='bash'):
-    # Use shlex.split to safely parse additional_run_arguments and run_command
-    additional_run_arguments_parts = shlex.split(additional_run_arguments)
-    run_command_parts = shlex.split(run_command)
-    
-    docker_command = [
-        'docker',
-        'run',
-        *get_docker_run_args(),
-        *additional_run_arguments_parts,
-        get_image_name(),
-        *run_command_parts
-    ]
+def get_data_dict_entry(key):
+    data_dict = json_to_dict('/data_dict.json')
+    if isinstance(key, list):
+        # Nested parameter case
+        result = data_dict
+        for key in key:
+            if key in result:
+                result = result[key]
+            else:
+                # Key not found in data dict, will use the literal string instead
+                result = key
+    elif isinstance(key, str):
+        # Top-level parameter case
+        if key in data_dict:
+            result = data_dict[key]
+        else:
+            # Key not found in data dict, will use the literal string instead
+            result = key
+    else:
+        raise TypeError("target_account_key must be either a string or a list of strings.")
+    return result
 
-    print("Executing Docker command:", ' '.join(docker_command))
-    subprocess.run(docker_command, check=True)
-
-def main(**run_args):
-    build()
-    run(**run_args)
+def main(key_string):
+    # Check if the string contains a semicolon
+    if '+' in key_string:
+        # Split the string by semicolon and then split each part by spaces
+        keys = [part.strip().split() for part in key_string.split('+')]
+    else:
+        # Split the string by spaces
+        keys = [key_string.split()]
+    resolved_keys = [get_data_dict_entry(key) for key in keys]
+    return resolved_keys
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run a Docker container with specified arguments.")
-    parser.add_argument('-a', '--additional_run_arguments', help='Docker run arguments')
-    parser.add_argument('-c', '--run_command', help='Command to run in the Docker container')
+    parser = argparse.ArgumentParser(description='Script that resolves keys of the ips_and_accounts.json')
+    parser.add_argument('-k', '--key_string', required=True, help='String that contains keys')
     args = parser.parse_args()
 
     # Use **vars(args) to convert argparse.Namespace to a dict, filtering out None values
-    main(**{k: v for k, v in vars(args).items() if v is not None})
+    resolved_data_str = ",".join(main(**{k: v for k, v in vars(args).items() if v is not None}))
+
+    print(resolved_data_str)  # This will output the value to stdout, which can be captured in a shell

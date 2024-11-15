@@ -1,0 +1,38 @@
+parameters:
+  master_discovery: true
+  discover_host_keys: "machine_a_ip + machine_b_ip"
+
+  master_sync: true
+  sync_remote_nodes: true
+  check_host: false
+  sync_suffix: "_sync"
+
+  topic_relay_incoming: true
+  topic_relay_outgoing: true
+
+windows:
+  - name: GOAL
+    layout: even-vertical
+    splits:
+      - commands:
+        - rostopic echo /move_base_simple/goal
+      - commands:
+        - rostopic echo /move_base_simple/goal_sync
+  - name: MAP_BW
+    layout: even-vertical
+    splits:
+      - commands:
+        - rostopic bw /costmap/costmap_compressed_sync
+      - commands:
+        - rostopic bw /costmap/costmap_compressed
+      - commands:
+        - rostopic bw /costmap/costmap
+  - name: MAP_HZ
+    layout: even-vertical
+    splits:
+      - commands:
+        - rostopic hz /costmap/costmap_compressed_sync
+      - commands:
+        - rostopic hz /costmap/costmap_compressed
+      - commands:
+        - rostopic hz /costmap/costmap

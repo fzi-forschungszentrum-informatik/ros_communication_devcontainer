@@ -1,0 +1,14 @@
+---
+windows:
+  - name: CORE
+    splits:
+      - commands:
+        - roscore
+    delay: 4
+  - name: ECHO
+    layout: even-vertical
+    splits:
+      - commands:
+        - rostopic echo /move_base_simple/goal
+      - commands:
+        - rostopic hz /costmap/costmap

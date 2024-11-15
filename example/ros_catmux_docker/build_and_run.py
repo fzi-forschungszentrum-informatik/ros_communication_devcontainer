@@ -37,44 +37,52 @@
 #
 # ---------------------------------------------------------------------
 
-import os
-import sys
-import subprocess
-import shlex
 import argparse
+import os
+import subprocess
+import sys
+import shlex
 
-from build import main as build
+directory_of_this_script = os.path.dirname(os.path.realpath(__file__))
 
-project_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-sys.path.append(project_dir)
-
-from utils.getters import *
-
-def run(additional_run_arguments='-it', run_command='bash'):
-    # Use shlex.split to safely parse additional_run_arguments and run_command
-    additional_run_arguments_parts = shlex.split(additional_run_arguments)
-    run_command_parts = shlex.split(run_command)
-    
-    docker_command = [
+def main(container_name, catmux_session_file, additional_run_arguments="", catmux_params=""):
+    # Docker build command to get image ID (quiet mode)
+    docker_build_cmd = f"docker build -q {directory_of_this_script}"
+    print("Executing Docker command:", ' '.join(docker_build_cmd))
+    image_id = subprocess.check_output(docker_build_cmd, shell=True).decode().strip()
+    inner_command="source /opt/ros/noetic/setup.bash && catmux_create_session /session.yaml"
+    if catmux_params: inner_command += f" --overwrite {catmux_params}"
+    run_command=f'/bin/bash -c "{inner_command}"'
+    docker_run_cmd = [
         'docker',
         'run',
-        *get_docker_run_args(),
-        *additional_run_arguments_parts,
-        get_image_name(),
-        *run_command_parts
+
+        # basic settings
+        '-it',
+        '--rm',
+        "--network", "host",
+        "--name", container_name,
+
+        # standard mounts
+        "-v", f"{catmux_session_file}:/session.yaml",
+
+        # user settings
+        *shlex.split(additional_run_arguments),
+
+        # Docker image and command
+        image_id, *shlex.split(run_command)
+        # image_id, "tail", "-f", "/dev/null"
     ]
 
-    print("Executing Docker command:", ' '.join(docker_command))
-    subprocess.run(docker_command, check=True)
-
-def main(**run_args):
-    build()
-    run(**run_args)
+    print("Executing Docker command:", ' '.join(docker_run_cmd))
+    subprocess.run(docker_run_cmd, check=True)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run a Docker container with specified arguments.")
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-n', '--container_name', required=True)
+    parser.add_argument('-f', '--catmux_session_file', required=True)
     parser.add_argument('-a', '--additional_run_arguments', help='Docker run arguments')
-    parser.add_argument('-c', '--run_command', help='Command to run in the Docker container')
+    parser.add_argument('-p', '--catmux_params')
     args = parser.parse_args()
 
     # Use **vars(args) to convert argparse.Namespace to a dict, filtering out None values

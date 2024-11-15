@@ -1,0 +1,10 @@
+before-command: {}
+common: {}
+parameters:
+  session_dir: /ws/example/1_hello_world_session
+windows:
+- layout: even-vertical
+  name: ECHO
+  splits:
+  - commands:
+    - echo test

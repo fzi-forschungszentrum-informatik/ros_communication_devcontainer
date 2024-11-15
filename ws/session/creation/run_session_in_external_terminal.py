@@ -32,50 +32,23 @@
 # !\file
 #
 # \author  Martin Gontscharow <gontscharow@fzi.de>
-# \date    2024-04-03
+# \date    2024-11-13
 #
 #
 # ---------------------------------------------------------------------
 
-import os
-import sys
-import subprocess
-import shlex
 import argparse
+import subprocess
 
-from build import main as build
-
-project_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-sys.path.append(project_dir)
-
-from utils.getters import *
-
-def run(additional_run_arguments='-it', run_command='bash'):
-    # Use shlex.split to safely parse additional_run_arguments and run_command
-    additional_run_arguments_parts = shlex.split(additional_run_arguments)
-    run_command_parts = shlex.split(run_command)
-    
-    docker_command = [
-        'docker',
-        'run',
-        *get_docker_run_args(),
-        *additional_run_arguments_parts,
-        get_image_name(),
-        *run_command_parts
-    ]
-
-    print("Executing Docker command:", ' '.join(docker_command))
-    subprocess.run(docker_command, check=True)
-
-def main(**run_args):
-    build()
-    run(**run_args)
+def main(session_dir):
+    print("External Terminal requested. Restarting script inside new gnome-terminal...")
+    gnome_terminal_command = f'gnome-terminal -- bash -c "/ws/session_creation/run_session.py --session-dir {session_dir}"'
+    print(f"Executing in gnome-terminal with command: {gnome_terminal_command}")
+    subprocess.run(gnome_terminal_command, shell=True, check=True)
+    print("Script execution in external gnome-terminal initiated.")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run a Docker container with specified arguments.")
-    parser.add_argument('-a', '--additional_run_arguments', help='Docker run arguments')
-    parser.add_argument('-c', '--run_command', help='Command to run in the Docker container')
+    parser = argparse.ArgumentParser(description=main.__doc__)
+    parser.add_argument("-s", "--session-dir")
     args = parser.parse_args()
-
-    # Use **vars(args) to convert argparse.Namespace to a dict, filtering out None values
     main(**{k: v for k, v in vars(args).items() if v is not None})

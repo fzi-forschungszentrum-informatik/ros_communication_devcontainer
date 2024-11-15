@@ -1,0 +1,3 @@
+parameters:
+  master_discovery: true
+  ros_core: true

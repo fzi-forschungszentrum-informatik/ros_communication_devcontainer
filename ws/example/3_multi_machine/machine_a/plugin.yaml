@@ -1,0 +1,11 @@
+parameters:
+  ros_ip_key: machine_a_ip
+  ros_master_hostname_key: machine_a_ip
+  discover_host_keys: machine_b_ip
+  master_sync: true
+  topic_list_paths_incoming: /ws/example/3_multi_machine/machine_a/talker_topic.txt
+windows:
+  - name: LISTEN
+    splits:
+      - commands:
+        - rostopic echo /chatter
