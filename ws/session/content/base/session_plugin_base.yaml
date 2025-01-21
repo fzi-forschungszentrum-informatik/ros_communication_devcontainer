@@ -9,7 +9,7 @@ parameters:
   ros_core: false
 
   rec: false
-  rec_command_1: "rosbag record --split --size=5120 -o ${dir_path}/rec_sync_ -e '(.*)_sync$'"
+  rec_command_1: "rosbag record --repeat-latched --split --size=5120 -o ${dir_path}/rec_sync_ -e '(.*)_sync$'"
   rec_command_2:
   rec_command_3:
   rec_command_4:
