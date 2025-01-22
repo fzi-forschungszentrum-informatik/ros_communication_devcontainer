@@ -36,7 +36,7 @@ parameters:
   topic_monitor: false
 
   heartbeat: false
-  heartbeat_topic: 
+  heartbeat_topics: 
 
 common:
   before_commands:
@@ -101,4 +101,4 @@ windows:
     if: heartbeat
     splits:
       - commands:
-        - /ws/session/content/base/heartbeat.py _topic_name:="${heartbeat_topic}"
+        - /ws/session/content/base/heartbeat.py _topic_names:="${heartbeat_topics}"
