@@ -35,6 +35,9 @@ parameters:
 
   topic_monitor: false
 
+  heartbeat: false
+  heartbeat_topic: 
+
 common:
   before_commands:
     - if [ '${before_command}' != "None" ]; then ${before_command}; fi
@@ -94,3 +97,8 @@ windows:
     splits:
       - commands:
         - /ws/session/content/base/topic_monitor.py
+  - name: BEAT
+    if: heartbeat
+    splits:
+      - commands:
+        - /ws/session/content/base/heartbeat.py _topic_name:="${heartbeat_topic}"
