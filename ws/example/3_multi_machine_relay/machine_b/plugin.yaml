@@ -1,0 +1,10 @@
+parameters:
+  host_ip: machine_b_ip
+  peers: machine_a_ip
+  topic_list_paths_outgoing: /ws/example/3_multi_machine_relay/chatter_topic.txt
+windows:
+  - name: TALK
+    splits:
+      - commands:
+        - |
+          ros2 topic pub /chatter std_msgs/msg/String "data: 'hello from talker'"

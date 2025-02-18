@@ -1,5 +1,5 @@
 // Fill out data for your machines
 {
-  "machine_a_ip": "0.0.0.0",
-  "machine_b_ip": "0.0.0.0"
+  "machine_a_ip": "10.254.0.34",
+  "machine_b_ip": "10.254.0.32"
 }

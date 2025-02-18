@@ -1,0 +1,22 @@
+"/chatter":
+  over_the_air_subscriber:
+    type: "std_msgs/msg/String"
+    qos:
+      reliability: "reliable"
+      depth: 100
+  local_publisher:
+    type: "std_msgs/msg/String"
+    qos:
+      reliability: "best_effort"
+      depth: 100
+
+  over_the_air_publisher:
+    type: "std_msgs/msg/String"
+    qos:
+      reliability: "reliable"
+      depth: 100
+  local_subscriber:
+    type: "std_msgs/msg/String"
+    qos:
+      reliability: "best_effort"
+      depth: 100

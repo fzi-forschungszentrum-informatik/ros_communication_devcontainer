@@ -1,86 +1,113 @@
-# Use the official image for ROS Noetic under Ubuntu 20.04
-FROM osrf/ros:noetic-desktop-full-focal
+# syntax=docker/dockerfile:1.4
 
-# Add non-root user
-ENV USERNAME=myuser
-ARG USER_UID=1000
-ARG USER_GID=$USER_UID
-RUN groupadd --gid $USER_GID $USERNAME \
-  && useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME \
-  && apt-get update \
-  && apt-get -y install sudo \
-   # [Optional] Add sudo support for the non-root user
-  && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME\
-  && chmod 0440 /etc/sudoers.d/$USERNAME \
-   # Clean up
-  && rm -rf /var/lib/apt/lists/*
+FROM ubuntu:24.04
 
-# Use the non-root user in this script
-USER ${USERNAME}:${USERNAME}
+##############################################################################
+# 1) Base environment
+##############################################################################
+ENV TZ=Europe/Berlin
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-WORKDIR /home/${USERNAME}/
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+ENV DEBIAN_FRONTEND=noninteractive
 
-# dev tools
-RUN sudo apt-get update && sudo apt-get -y install \
-    git \
-    python-is-python3 \
-  && sudo rm -rf /var/lib/apt/lists/*
+##############################################################################
+# 2) Install base dependencies
+##############################################################################
+# - Combine apt-get update & install
+RUN apt-get update && apt-get install -y \
+    # Basic dev tools & libs
+    python3 python3-pip python3-venv python3-dev python3-empy \
+    cmake build-essential git wget ffmpeg \
+    libsm6 libxext6 ninja-build libglib2.0-0 libxrender-dev \
+    vim ssh emacs curl gnupg lsb-release sudo \
+    tmux gosu \
+ && rm -rf /var/lib/apt/lists/*
 
-## Source ROS in bash
-RUN echo 'source /opt/ros/$ROS_DISTRO/setup.bash' >> /home/${USERNAME}/.bashrc
-RUN echo '[ -f ~/catkin_ws/devel/setup.bash ] && source ~/catkin_ws/devel/setup.bash' >> /home/${USERNAME}/.bashrc
+##############################################################################
+# 3) Install pip dependencies in virtual environment
+##############################################################################
+RUN python3 -m venv /opt/ros_venv --system-site-packages
+RUN /opt/ros_venv/bin/pip install --no-cache-dir --upgrade pip
+RUN . /opt/ros_venv/bin/activate && \
+    pip install --no-cache-dir \
+      catkin_tools \
+      rosdep \
+      rosinstall_generator \
+      vcstool \
+      PyYAML \
+      catmux
 
-# catmux
-RUN sudo apt-get update && sudo apt-get -y install \
-    tmux \
-    python3-pip \
-  && sudo rm -rf /var/lib/apt/lists/*
-# version 0.3.4 has problems with catmux_create_session
-RUN pip install --user catmux
-RUN echo 'alias catmux="tmux -L catmux"' >> /home/${USERNAME}/.bashrc
+##############################################################################
+# 4) Add the ROS 2 repository for certain packages on 24.04
+##############################################################################
+# This helps rosdep find dependencies that might be missing for Noetic
+RUN curl -sSL "https://raw.githubusercontent.com/ros/rosdistro/master/ros.key" \
+    -o /usr/share/keyrings/ros-archive-keyring.gpg \
+ && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] \
+    http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" \
+    | tee /etc/apt/sources.list.d/ros2.list > /dev/null \
+ && apt-get update
 
-RUN pip install --user PyYAML
+##############################################################################
+# 5) Initialize rosdep & fetch Noetic
+##############################################################################
+RUN mkdir -p /ros1_ws/src
+RUN . /opt/ros_venv/bin/activate && \
+    rosdep init && \
+    rosdep update && \
+    rosinstall_generator ros_core --rosdistro noetic --deps --tar > noetic.core.rosinstall && \
+    vcs import --input noetic.core.rosinstall /ros1_ws/src && \
+    rosdep install --from-paths /ros1_ws/src \
+      --ignore-packages-from-source \
+      --rosdistro noetic \
+      --skip-keys="python3-catkin-pkg" \
+      -y
 
-# network tools
-RUN sudo apt-get update && sudo apt-get -y install \
-    ssh \
-    openvpn \
-    iputils-ping \
-    psmisc \
-    net-tools \
-    snmp \
-    wireless-tools \
-    wakeonlan \
-  && sudo rm -rf /var/lib/apt/lists/*
-RUN pip install --user pysnmp
-RUN pip install --user speedtest-cli
-RUN pip install --user psutil
-RUN pip install --user zstandard
+##############################################################################
+# 6) Patch rosconsole
+##############################################################################
+RUN mkdir -p /ros1_ws/src/rosconsole && \
+    wget -O /ros1_ws/src/rosconsole/rosconsole.patch https://gist.githubusercontent.com/Crcodlus/111f25ac48fed5004a86aae7a9d758c7/raw/e21c3fb9ddd04e67f1873855eeef2bcb50ac883a/rosconsole.patch && \
+    git -C /ros1_ws/src/rosconsole apply --ignore-whitespace /ros1_ws/src/rosconsole/rosconsole.patch
 
-# ros-multi-master
-RUN sudo apt-get update && sudo apt-get -y install \
-    ros-noetic-fkie-multimaster \
-  && sudo rm -rf /var/lib/apt/lists/*
+COPY rosconsole_log4cxx.cpp /ros1_ws/src/rosconsole/src/rosconsole/impl/
+COPY roslogging.py /ros1_ws/src/ros_comm/rosgraph/src/rosgraph/
 
-# Install gnome-terminal to be able to launch a terminal from inside the docker
-# - install dependencies
-    # dbus: 
-        # neccessary for the gnome-terminal to work
-        # see: https://askubuntu.com/a/1407915
-    # dconf-cli: for setting the gnome-terminal preferences via cli
-    # libglib2.0-bin for using gsettings to fix a bug later
-RUN sudo apt-get update && sudo apt-get install -y \
-    gnome-terminal \
-    dbus-x11 \
-    dconf-cli \
-    libglib2.0-bin
+##############################################################################
+# 7) Build Noetic
+##############################################################################
+RUN /opt/ros_venv/bin/catkin build --workspace /ros1_ws
 
-# Configure GNOME Terminal settings: hide menubar, don't use theme colors
-RUN dbus-launch gsettings set org.gnome.Terminal.Legacy.Settings default-show-menubar false && \
-    profile_ids=$(dbus-launch gsettings get org.gnome.Terminal.ProfilesList list | tr -d "[]',") && \
-    for id in $profile_ids; do \
-        dbus-launch gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$id/ use-theme-colors false; \
-        dbus-launch gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$id/ scrollbar-policy 'never'; \
-    done
-# Note about dbus-launch: It's used to start a D-Bus session bus instance. This is necessary because gsettings
-# and dconf require an active D-Bus session to communicate with the gsettings backend.
+##############################################################################
+# 8) Install ROS2 (Jazzy) + DDS (system-level apt)
+##############################################################################
+RUN apt-get update && apt-get install -y \
+    ros-jazzy-ros-base \
+    python3-colcon-common-extensions \
+    ros-jazzy-rmw-cyclonedds-cpp \
+    ros-jazzy-rmw-fastrtps-cpp \
+ && rm -rf /var/lib/apt/lists/*
+
+##############################################################################
+# 9) Environment settings
+##############################################################################
+# We'll store a script that sources the venv + /ros1_ws/devel + jazzy
+RUN echo 'source /opt/ros_venv/bin/activate' >> /root/.bashrc
+RUN echo 'source /opt/ros/jazzy/setup.bash' >> /root/.bashrc
+RUN echo "export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST" >> /root/.bashrc
+RUN echo 'alias catmux="tmux -L catmux"' >> /root/.bashrc
+
+##############################################################################
+# 10) Clean up
+##############################################################################
+# Delete unused user which is created by default in the ubuntu image
+RUN userdel -r $(id -un 1000)
+
+##############################################################################
+# 11) EntryPoint
+##############################################################################
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]

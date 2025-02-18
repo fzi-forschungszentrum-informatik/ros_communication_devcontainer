@@ -1,0 +1,14 @@
+<CycloneDDS>
+    <Domain>
+        <General>
+            <Interfaces>
+                <NetworkInterface address="#host_ip"/>
+            </Interfaces>
+        </General>
+    </Domain>
+    <Discovery>
+        <Peers>
+            #peers
+        </Peers>
+    </Discovery>
+</CycloneDDS>

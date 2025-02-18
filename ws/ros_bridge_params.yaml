@@ -1,0 +1,43 @@
+bridge:
+  topics:
+    - topic: /shuttle_ella/sensors/camera/front_wide/image_color_reduced_sync
+      type: sensor_msgs/msg/CompressedImage
+      direction: both
+      queue_size: 10
+      qos:
+        reliability: best_effort
+        durability: volatile
+        history: keep_last
+        depth: 10
+
+    - topic: /shuttle_ella/costmap/costmap_remapped_compressed_sync
+      type: std_msgs/msg/UInt8MultiArray
+      direction: both
+      queue_size: 10
+      qos:
+        reliability: best_effort
+        durability: volatile
+        history: keep_last
+        depth: 10
+
+    - topic: /shuttle_ella/tf_remapped_sync
+      type: tf2_msgs/msg/TFMessage
+      direction: both
+      queue_size: 50
+      qos:
+        reliability: best_effort
+        durability: volatile
+        history: keep_last
+        depth: 50
+
+    - topic: /shuttle_ella/can/is_autonomous_sync
+      type: std_msgs/msg/Bool
+      direction: both
+      queue_size: 1
+      qos:
+        reliability: reliable
+        durability: volatile
+        history: keep_last
+        depth: 1
+
+    # etc. ... Add more as needed
