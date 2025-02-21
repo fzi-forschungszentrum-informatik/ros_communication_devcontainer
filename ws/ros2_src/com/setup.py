@@ -28,8 +28,11 @@ setup(
             'universal_compress = com.universal_compress:main',
             'universal_decompressor = com.universal_decompressor:main',
             'heartbeat = com.heartbeat:main',
-            'over_the_air_bridge = com.over_the_air_bridge:main',
             'topic_monitor = com.topic_monitor:main',
+            'bridge_in = com.bridge_in:main',
+            'bridge_out = com.bridge_out:main',
+            'relay_in = com.relay_in:main',
+            'relay_out = com.relay_out:main',
         ],
     },
 )

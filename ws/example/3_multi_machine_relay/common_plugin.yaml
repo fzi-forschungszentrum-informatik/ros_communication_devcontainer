@@ -1,4 +1,3 @@
 parameters:
   ros_domain_id: 47
-  sync: true
   qos_config_file: /ws/example/3_multi_machine_relay/qos.yaml

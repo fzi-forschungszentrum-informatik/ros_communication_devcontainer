@@ -10,18 +10,23 @@ parameters:
   rec_command_3:
   rec_command_4:
 
-  sync: false
+  in: false
+  out: false
   # rmw_implementation: "rmw_cyclonedds_cpp"
   host_ip: # e.g. "machine_a ip"
   peers: # e.g. "machine_b ip + machine_c ip"
+  qos_config_file: "" # e.g. "/config/qos_config.yaml"
+  host_name: "" # e.g. "control_center"
+  target_peers: "" # e.g. "shuttle_ella,shuttle_anna"
+  peer_names: "" # e.g. "shuttle_ella,shuttle_anna"
   topic_list_paths_incoming: "" # e.g. "/machine_a,/machine_b"
-  topic_list_prefixes_incoming: "" # e.g. "/machine_a,/machine_b"
-  remove_target_prefix_incoming: '""' # e.g. /machine_b
-  topic_list_prefixes_outgoing: "" # e.g. "/machine_a,/machine_b"
-  target_prefix_outgoing: '""' # e.g. /machine_a
   topic_list_paths_outgoing: "" # e.g. "/machine_a,/machine_b"
-  sync_suffix: "_sync"
-  qos_config_file: ""
+
+  # topic_list_prefixes_incoming: "" # e.g. "/machine_a,/machine_b"
+  # remove_target_prefix_incoming: '""' # e.g. /machine_b
+  # topic_list_prefixes_outgoing: "" # e.g. "/machine_a,/machine_b"
+  # target_prefix_outgoing: '""' # e.g. /machine_a
+  # sync_suffix: "_sync"
 
   topic_monitor: false
 
@@ -58,22 +63,45 @@ windows:
         - if [ "${rec_command_4}" == "None" ]; then exit; fi
         - "${rec_command_4}"
     delay: 1
-  - name: SYNC
-    if: sync
+  - name: IN
+    if: in
     splits:
       - commands:
-        - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-            CYCLONEDDS_URI=$(/ws/dds_configs/get_cyclonedds_xml.py -i ${host_ip} -p "${peers}")
-            ROS_STATIC_PEERS=$(/ws/session/content/get_data_dict_entries.py -k "${peers}")
-            ros2 run com over_the_air_bridge
-            --ros-args
-            -p topic_list_paths_incoming:=[${topic_list_paths_incoming}]
-            -p topic_list_prefixes_incoming:=[${topic_list_prefixes_incoming}]
-            -p remove_target_prefix_incoming:='${remove_target_prefix_incoming}'
-            -p topic_list_paths_outgoing:=[${topic_list_paths_outgoing}]
-            -p topic_list_prefixes_outgoing:=[${topic_list_prefixes_outgoing}]
-            -p target_prefix_outgoing:='${target_prefix_outgoing}'
-            -p sync_suffix:='${sync_suffix}'
+        - export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+        - export CYCLONEDDS_URI=$(/ws/dds_configs/get_cyclonedds_xml.py -i ${host_ip} -p "${peers}")
+        - export ROS_STATIC_PEERS=$(/ws/session/content/get_data_dict_entries.py -k "${peers}")
+        - ros2 run com bridge_in --ros-args
+            -p node_role:="bridge_in"
+            -p base_topic_files:=[${topic_list_paths_incoming}]
+            -p host_name:=${host_name}
+            -p target_names:=[${peer_names}]
+            -p qos_config_file:=${qos_config_file}
+      - commands:
+        - ros2 run com relay_in --ros-args
+            -p node_role:=relay_in
+            -p base_topic_files:=[${topic_list_paths_incoming}]
+            -p host_name:=${host_name}
+            -p target_names:=[${peer_names}]
+            -p qos_config_file:=${qos_config_file}
+  - name: OUT
+    if: out
+    splits:
+      - commands:
+        - export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+        - export CYCLONEDDS_URI=$(/ws/dds_configs/get_cyclonedds_xml.py -i ${host_ip} -p "${peers}")
+        - export ROS_STATIC_PEERS=$(/ws/session/content/get_data_dict_entries.py -k "${peers}")
+        - ros2 run com bridge_out --ros-args
+            -p node_role:=bridge_out
+            -p base_topic_files:=[${topic_list_paths_outgoing}]
+            -p host_name:=${host_name}
+            -p target_names:=[${target_peers}]
+            -p qos_config_file:=${qos_config_file}
+      - commands:
+        - ros2 run com relay_out --ros-args
+            -p node_role:=relay_out
+            -p base_topic_files:=[${topic_list_paths_outgoing}]
+            -p host_name:=${host_name}
+            -p target_names:=[${target_peers}]
             -p qos_config_file:=${qos_config_file}
   - name: TOP
     if: topic_monitor

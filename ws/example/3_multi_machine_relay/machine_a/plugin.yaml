@@ -1,6 +1,8 @@
 parameters:
   host_ip: machine_a_ip
   peers: machine_b_ip
+  in: true
+  host_name: machine_b
   topic_list_paths_incoming: /ws/example/3_multi_machine_relay/chatter_topic.txt
 windows:
   - name: LISTEN
