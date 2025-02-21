@@ -107,12 +107,35 @@ RUN /bin/bash -c " \
     colcon build --symlink-install --packages-select ros1_bridge --cmake-force-configure"
 
 ##############################################################################
+# 8c) Add missing dependencies
+##############################################################################
+
+RUN . /opt/ros_venv/bin/activate && \
+    pip install --no-cache-dir \
+        lz4 \
+        pysnmp \
+        speedtest-cli \
+        psutil \
+        zstandard
+
+RUN apt-get update && apt-get -y install \
+    openvpn \
+    iputils-ping \
+    psmisc \
+    net-tools \
+    snmp \
+    wireless-tools \
+    wakeonlan \
+  && sudo rm -rf /var/lib/apt/lists/*
+
+##############################################################################
 # 9) Environment settings
 ##############################################################################
 # We'll store a script that sources the venv + /ros1_ws/devel + jazzy
 RUN echo 'source /opt/ros_venv/bin/activate' >> /root/.bashrc
 RUN echo 'source /opt/ros/jazzy/setup.bash' >> /root/.bashrc
 RUN echo "export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST" >> /root/.bashrc
+RUN echo 'export PYTHONPATH="/opt/ros_venv/lib/python3.12/site-packages:$PYTHONPATH"' >> /root/.bashrc
 RUN echo 'alias catmux="tmux -L catmux"' >> /root/.bashrc
 
 ##############################################################################

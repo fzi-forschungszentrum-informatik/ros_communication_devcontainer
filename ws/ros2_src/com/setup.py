@@ -25,7 +25,7 @@ setup(
             'wifi_network_analysis_2 = com.wifi_network_analysis_2:main',
             'speedtest = com.speedtest:main',
             'traffic_monitor = com.traffic_monitor:main',
-            'universal_compress = com.universal_compress:main',
+            'universal_compressor = com.universal_compressor:main',
             'universal_decompressor = com.universal_decompressor:main',
             'heartbeat = com.heartbeat:main',
             'topic_monitor = com.topic_monitor:main',
