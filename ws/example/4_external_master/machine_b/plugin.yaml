@@ -1,6 +1,9 @@
 parameters:
-  ros_ip_key: machine_b_ip
-  discover_host_keys: machine_a_ip
+  host_ip: machine_b_ip
+  peers: machine_a_ip
 
-  topic_relay_outgoing: true
-  topic_list_paths_outgoing: /ws/example/4_external_master/talker_topic.txt
+  out: true
+  host_name: machine_b
+  topic_list_paths_outgoing: /ws/example/4_external_master/chatter_topic.txt
+
+  ros1_ip_key: machine_b_ip

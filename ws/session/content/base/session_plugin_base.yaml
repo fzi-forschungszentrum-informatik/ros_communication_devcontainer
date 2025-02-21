@@ -39,6 +39,7 @@ parameters:
   ros1_ip_key: # e.g. "machine_a ip"
   ros1_master_hostname_key: "localhost"
   ros1_master_port: 11311
+  ros1_bridge_file:
 
 common:
   before_commands:
@@ -123,6 +124,9 @@ windows:
     if: ros1_bridge
     splits:
       - commands:
-        - if [ '${ros_ip_key}' != "None" ]; then export ROS_IP=$(/ws/session/content/get_data_dict_entries.py -k "${ros1_ip_key}") && echo ${ROS1_IP}; fi
+        - if [ '${ros1_ip_key}' != "None" ]; then export ROS_IP=$(/ws/session/content/get_data_dict_entries.py -k "${ros1_ip_key}") && echo ${ROS1_IP}; fi
+        - source /ros1_ws/devel/setup.bash
         - export ROS_MASTER_URI=http://$(/ws/session/content/get_data_dict_entries.py -k "${ros1_master_hostname_key}"):${ros1_master_port}
-        - ros2 run ros1_bridge parameter_bridge --config /config/ros_bridge_params.yaml
+        - rosparam load ${ros1_bridge_file}
+        - source /ros2_ros1_bridge_ws/install/setup.bash
+        - ros2 run ros1_bridge parameter_bridge

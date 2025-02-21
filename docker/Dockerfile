@@ -91,6 +91,22 @@ RUN apt-get update && apt-get install -y \
  && rm -rf /var/lib/apt/lists/*
 
 ##############################################################################
+# 8b) Setup ros2-ros1-bridge
+##############################################################################
+
+# Create a workspace for ros1_bridge
+RUN mkdir -p /ros2_ros1_bridge_ws/src && cd /ros2_ros1_bridge_ws/src && \
+    git clone https://github.com/ros2/ros1_bridge.git
+
+# Source ROS 1, ROS 2, and build ros1_bridge
+RUN /bin/bash -c " \
+    source /opt/ros_venv/bin/activate && \
+    source /ros1_ws/devel/setup.bash && \
+    source /opt/ros/jazzy/setup.bash && \
+    cd /ros2_ros1_bridge_ws && \
+    colcon build --symlink-install --packages-select ros1_bridge --cmake-force-configure"
+
+##############################################################################
 # 9) Environment settings
 ##############################################################################
 # We'll store a script that sources the venv + /ros1_ws/devel + jazzy
