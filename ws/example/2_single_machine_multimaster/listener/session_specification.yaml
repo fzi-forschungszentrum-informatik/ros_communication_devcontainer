@@ -1,5 +1,0 @@
-name: listener
-session_plugins:
-  - /ws/example/2_single_machine_multimaster/listener/plugin.yaml
-  - /ws/example/2_single_machine_multimaster/common_plugin.yaml
-  - /ws/session/content/base/session_plugin_base.yaml

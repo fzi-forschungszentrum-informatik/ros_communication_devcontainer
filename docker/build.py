@@ -48,8 +48,6 @@ from utils.getters import *
 
 def main():
     docker_build_args = [
-        '--build-arg', f"USER_UID={os.getuid()}",
-        '--build-arg', f"USER_GID={os.getgid()}",
         '-t', get_image_name()
     ]
 

@@ -1,0 +1,13 @@
+topics:
+  -
+    topic: /move_base_simple/goal
+    type: geometry_msgs/msg/PoseStamped
+    queue_size: 1
+  # - 
+  #   topic: /costmap/costmap
+  #   type: nav_msgs/msg/OccupancyGrid
+  #   queue_size: 1
+  - 
+    topic: "/costmap/costmap_compressed"
+    type: "std_msgs/msg/UInt8MultiArray"
+    queue_size: 1

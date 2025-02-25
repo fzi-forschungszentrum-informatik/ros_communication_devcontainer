@@ -13,6 +13,7 @@ def run():
     container_name = "ros_master_and_playback"
     catmux_session_file = f'{directory_of_this_script}/master_session.yaml'
     additional_run_arguments = f"-v {directory_of_this_script}/costmap_1second.bag:/costmap_1second.bag"
+    additional_run_arguments += f" -v {directory_of_this_script}/compression:/compression"
 
     build_and_run(container_name, catmux_session_file, additional_run_arguments)
 

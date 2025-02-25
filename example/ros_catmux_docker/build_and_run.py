@@ -40,17 +40,16 @@
 import argparse
 import os
 import subprocess
-import sys
 import shlex
 
 directory_of_this_script = os.path.dirname(os.path.realpath(__file__))
 
 def main(container_name, catmux_session_file, additional_run_arguments="", catmux_params=""):
     # Docker build command to get image ID (quiet mode)
-    docker_build_cmd = f"docker build -q {directory_of_this_script}"
+    docker_build_cmd = f"docker build -q {directory_of_this_script} --build-arg USER_UID={os.getuid()} --build-arg USER_GID={os.getgid()}"
     print("Executing Docker command:", ' '.join(docker_build_cmd))
     image_id = subprocess.check_output(docker_build_cmd, shell=True).decode().strip()
-    inner_command="source /opt/ros/noetic/setup.bash && catmux_create_session /session.yaml"
+    inner_command="source /opt/ros/noetic/setup.bash && /home/myuser/.local/bin/catmux_create_session /session.yaml"
     if catmux_params: inner_command += f" --overwrite {catmux_params}"
     run_command=f'/bin/bash -c "{inner_command}"'
     docker_run_cmd = [
@@ -62,6 +61,9 @@ def main(container_name, catmux_session_file, additional_run_arguments="", catmu
         '--rm',
         "--network", "host",
         "--name", container_name,
+        "-u", f"{os.getuid()}:{os.getgid()}",
+        "-e", "ROS_HOME=/home/myuser/ros_home",
+        "-e", "ROS_LOG_DIR=/home/myuser/ros_logs",
 
         # standard mounts
         "-v", f"{catmux_session_file}:/session.yaml",

@@ -1,0 +1,9 @@
+topics:
+  /move_base_simple/goal:
+    type: geometry_msgs/msg/PoseStamped
+  /costmap/costmap_compressed:
+    type: std_msgs/msg/UInt8MultiArray
+  /abeat:
+    type: "geometry_msgs/msg/PoseStamped"
+  /bbeat:
+    type: "geometry_msgs/msg/PoseStamped"

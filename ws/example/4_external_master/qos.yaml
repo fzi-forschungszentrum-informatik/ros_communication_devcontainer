@@ -1,0 +1,3 @@
+topics:
+  "/chatter":
+    type: "std_msgs/msg/String"

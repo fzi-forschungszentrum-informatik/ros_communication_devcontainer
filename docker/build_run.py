@@ -43,17 +43,21 @@ import subprocess
 import shlex
 import argparse
 
-from build import main as build
-
 project_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(project_dir)
 
 from utils.getters import *
+from docker.build import main as build
 
 def run(additional_run_arguments='-it', run_command='bash'):
     # Use shlex.split to safely parse additional_run_arguments and run_command
     additional_run_arguments_parts = shlex.split(additional_run_arguments)
-    run_command_parts = shlex.split(run_command)
+
+    # If exec_command is a single command (not already wrapped for bash), wrap it
+    if isinstance(run_command, str):
+        run_command_parts = shlex.split(run_command)
+    else:
+        run_command_parts = run_command  # Assume it's already a list
     
     docker_command = [
         'docker',

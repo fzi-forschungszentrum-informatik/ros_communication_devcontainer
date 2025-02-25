@@ -35,11 +35,6 @@ def get_local_mount_args():
     local_config = get_local_config()
     mount_args = []
 
-    ros_ws_mount = local_config.get("ros_ws_mount")
-    if ros_ws_mount:
-        mount_args.append("-v")
-        mount_args.append(f"{ros_ws_mount}:/home/myuser/catkin_ws/src")
-
     custom_mounts = local_config.get("custom_mounts")
     if custom_mounts:
         for mount in custom_mounts:

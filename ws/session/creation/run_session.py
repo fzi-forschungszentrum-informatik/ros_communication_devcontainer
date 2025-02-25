@@ -54,7 +54,7 @@ def main(session_dir):
     create_session_yaml(session_dir)
 
     # Define the command and arguments
-    command = "/home/myuser/.local/bin/catmux_create_session"
+    command = "catmux_create_session"
     yaml_file_path = f'{session_dir}/.session_readonly.yaml'
     session_name_arg = "--session_name"
 

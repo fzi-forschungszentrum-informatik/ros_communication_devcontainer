@@ -1,0 +1,25 @@
+<CycloneDDS>
+    <Domain>
+        <General>
+            <Interfaces>
+                <NetworkInterface address="#host_ip"/>
+            </Interfaces>
+            <MulticastRecvNetworkInterfaceAddresses>none</MulticastRecvNetworkInterfaceAddresses>
+        </General>
+
+        <Discovery>
+            <Peers>
+                #peers
+            </Peers>
+            <EnableTopicDiscoveryEndpoints>false</EnableTopicDiscoveryEndpoints>
+            <LeaseDuration>60s</LeaseDuration>
+            <SPDPInterval>30s</SPDPInterval>
+        </Discovery>
+
+        <Internal>
+            <BuiltinEndpointSet>minimal</BuiltinEndpointSet>
+            <HeartbeatInterval min="500 ms" max="8 s"/>
+            <SquashParticipants>true</SquashParticipants>
+        </Internal>
+    </Domain>
+</CycloneDDS>
