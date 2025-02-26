@@ -1,3 +1,11 @@
+defaults:
+  ota_sub:
+    reliability: best_effort
+  ota_pub:
+    reliability: best_effort
+  forward_sub:
+    reliability: best_effort
+
 topics:
   /move_base_simple/goal:
     type: geometry_msgs/msg/PoseStamped
