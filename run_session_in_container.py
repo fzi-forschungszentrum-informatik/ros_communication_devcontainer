@@ -46,8 +46,8 @@ project_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(project_dir)
 
 from utils.getters import *
-from docker.build_run import main as build_run
-from docker.exec import main as exec
+from docker_.build_run import main as build_run
+from docker_.exec import main as exec
 
 # hotfix where usage of robot folders leads to problems
 unwanted_path = "/home/carpc/robot_folders/src/robot_folders"

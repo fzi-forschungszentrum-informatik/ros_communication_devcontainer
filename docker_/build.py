@@ -52,7 +52,7 @@ def main():
     ]
 
     docker_command = [
-        'docker', 'build', *docker_build_args, os.path.join(project_dir, 'docker')
+        'docker', 'build', *docker_build_args, os.path.join(project_dir, 'docker_')
     ]
 
     print("Executing Docker command:", ' '.join(docker_command))

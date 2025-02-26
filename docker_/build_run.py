@@ -47,7 +47,7 @@ project_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(project_dir)
 
 from utils.getters import *
-from docker.build import main as build
+from docker_.build import main as build
 
 def run(additional_run_arguments='-it', run_command='bash'):
     # Use shlex.split to safely parse additional_run_arguments and run_command
