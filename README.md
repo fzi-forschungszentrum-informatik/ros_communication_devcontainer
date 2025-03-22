@@ -1,54 +1,47 @@
 # ROS Communication DevContainer
 
-The ROS Communication DevContainer is a Docker-based solution designed to streamline the synchronization of ROS topics across Linux machines. It's crafted to support scalable communications, facilitating easier remote operations for autonomous vehicles. This project aligns with the publication "Scalable Remote Operation for Autonomous Vehicles: Integration of Cooperative Perception and Open Source Communication."
+The ROS Communication DevContainer is a Docker-based solution designed to streamline the synchronization of ROS topics across Linux machines. It supports both ROS1 (Noetic) and ROS2, with built-in compression capabilities for efficient data transfer. This project aligns with the publication "Scalable Remote Operation for Autonomous Vehicles: Integration of Cooperative Perception and Open Source Communication."
 
 <details>
 <summary>Key Features</summary>
 
 - **Minimal Dependencies**: Only Docker is needed to get started, simplifying the setup process.
 - **Isolation**: Operates in a separate Docker container, ensuring minimal impact on existing ROS setups.
-- **Centralized Configuration Management**: All configurations are stored and managed in this repository, allowing for easy synchronization across machines via Git.
+- **Centralized Configuration Management**: All configurations are stored and managed in this repository.
+- **Cross-ROS Support**: Compatible with both ROS1 Noetic and ROS2.
+- **Advanced Compression**: Built-in compression capabilities for efficient data transfer.
+- **QoS Configuration**: Flexible Quality of Service settings for optimized communication.
 
 </details>
 
 ## Getting Started
 
-### Forking the Repository
+### Prerequisites
 
-To tailor the ROS Communication DevContainer to your specific needs, we recommend forking this repository. This allows you to make system-specific adjustments and keep your changes organized without affecting the original template.
+- Docker installed on all machines
+- Git for configuration management
+- Machines connected to the same network (VPN or local WLAN)
 
-### Basic Setup for Connected Machines
+### Basic Setup
 
-To prepare your machines for communication, follow these steps on each device:
+1. Fork this repository
+2. Configure your environment:
+   - `data_dict.json`: Maps semantic names to resources (example in `config/examples/data_dict.json`)
+   - `local.json`: Container-specific settings (example in `config/examples/local.json`)
 
-<details>
-<summary>Setup Machines</summary>
+### Configuration Files
 
-- Ensure all machines are connected to the same network. This could be an internet connection with VPN, or a local WLAN network.
-- Install Docker: Required for running the communication module.
+Two main configuration types:
 
-</details>
+1. **Session Configuration**:
+   - `session_specification.yaml`: Defines communication session structure
+   - `[plugin_name].yaml`: Individual plugin configurations
 
-<details>
-<summary>Configuration Adjustments</summary>
+2. **Compression Configuration** (Optional):
+   - Configure compression settings for specific topics
+   - Support for multiple compression algorithms
 
-To set up the ROS Communication DevContainer, you need to adjust two main configuration files:
-
-1. **`data_dict.json`**:
-   - This file is a dictionary that maps semantic names to your data, such as IP addresses. It enables the ROS Communication DevContainer to recognize and reference your resources easily.
-   - An example configuration file is provided in `config/examples/data_dict.json`.
-   - You can either use the example configuration directly or create your own. If you create a new one, specify its path in `config/local.json`.
-
-2. **`local.json`**:
-   - This file contains repository-specific settings, such as container and image names, and optionally the paths to your configuration files.
-   - An example of this file is available in `config/examples/local.json`.
-   - You should create this file (or copy the example) and place it in `config/local.json`.
-
-**Note**: Ensure that these configuration files are synchronized across all machines using Git to facilitate seamless communication.
-
-</details>
-
-## Demonstration and Usage
+## Usage Examples
 
 ### Starting Points: Examples
 
@@ -75,40 +68,43 @@ This example checks if the ROS Communication DevContainer can be started success
 </details>
 
 <details>
-<summary>Example 2: Single Machine Multimaster</summary>
+<summary>Example 2: Multi-Machine Direct Communication</summary>
 
-This example verifies if ROS communication works for multiple masters on a single machine.
+This example demonstrates ROS2 communication between distinct machines using direct communication.
 
-- Open two terminals on the same machine.
-- In the first terminal, execute:
+- On `machine_a`, execute:
   ```bash
-  ./example/2_single_machine_multimaster/run_listener.sh
-- In the second terminal, execute:
+  ./example/2_multi_machine_direct/run_machine_a.sh
+  ```
+- On `machine_b`, execute:
   ```bash
-  ./example/2_single_machine_multimaster/run_talker.sh
-- Confirm that the listener prints an acknowledgment that it has received messages from the talker.
+  ./example/2_multi_machine_direct/run_machine_b.sh
+  ```
+- Confirm that the listener on `machine_a` acknowledges the messages from the talker on `machine_b`.
 
 </details>
 
 <details>
-<summary>Example 3: Multi-Machine Communication</summary>
+<summary>Example 3: Multi-Machine Relay Communication</summary>
 
-This example tests ROS communication between distinct machines (and distinct masters).
+This example demonstrates ROS2 communication between distinct machines using relay nodes.
 
 - On `machine_a`, execute:
   ```bash
-  ./example/3_multi_machine/run_machine_a.sh
+  ./example/3_multi_machine_relay/run_machine_a.sh
+  ```
 - On `machine_b`, execute:
   ```bash
-  ./example/3_multi_machine/run_machine_b.sh
-- Confirm that the listener on `machine_a` acknowledges the messages sent by the talker on `machine_b`.
+  ./example/3_multi_machine_relay/run_machine_b.sh
+  ```
+- Confirm that the listener on `machine_a` acknowledges the messages from the talker on `machine_b`.
 
 </details>
 
 <details>
 <summary>Example 4: External Master</summary>
 
-This example adds a layer of separation between the main logic and communication, allowing existing local code to remain unchanged.
+This example adds a layer of separation between the main logic and communication, allowing existing local ROS1 code to remain unchanged.
 
 - On `machine_a`, navigate to `example/4_external_master/machine_a` and execute the following commands in separate terminals:
   - `./run_master.py`
@@ -131,30 +127,35 @@ This example demonstrates handling more complex data, such as an occupancy grid 
 - On `machine_b`, navigate to `example/5_showcase/machine_b` and execute the following commands in separate terminals:
   - `./run_master.py`
   - `./run_communication.sh`
-- Confirm that the master on `machine_a` acknowledges the messages from the master on `machine_b`.
+- Confirm that the master on `machine_a` acknowledges the compressed messages from the master on `machine_b`.
+
+The showcase example includes:
+- ROS1 to ROS2 bridge functionality
+- Automatic topic compression and decompression
+- QoS configuration for optimized communication
+- Heartbeat monitoring between machines
 
 </details>
 
-### Expanding Communication Capabilities
-The ROS Communication DevContainer is designed to be flexible, allowing you to expand and tailor its communication routines to meet specific project requirements. All routines are defined using two key file types:
+## Advanced Features
 
-- **`session_specification.yaml`**:
-  - This file outlines the structure of your communication session by listing the plugins to be used.
-  - It acts as a blueprint for combining plugins into a cohesive communication workflow.
+### Compression Support
 
-- **`[plugin_name].yaml`**:
-  - This file defines an individual plugin, which specifies a catmux session.
-  - Plugins can be modular and reusable across different `session_specification.yaml` files, enabling easy customization and scalability.
+The system includes universal compression capabilities for ROS topics:
 
-To initiate a communication session, use the following command:
-```bash
-run_session_in_container.py --session-dir [/path/to/your/session_dir]
+```yaml
+compression:
+  - topic_regex: ".*"
+    algorithm: "bz2"  # Optional, defaults to bz2
+    add_suffix: "_compressed"  # Optional
 ```
-Here, `session_dir` refers to the directory containing your `session_specification.yaml` file. Customize your plugins and sessions by exploring the examples in `ws/example`, which provide a foundation for creating complex communication setups tailored to your needs.
 
-By leveraging this modular approach, you can build advanced, scalable, and reusable communication routines for your project.
+### Cross-ROS Communication
 
-**Note**: Ensure that any changes you make are synchronized across all machines via Git to maintain consistent configurations and communication capabilities.
+Support for both ROS1 and ROS2 environments:
+- Bridge nodes for cross-version communication
+- Automatic topic discovery and mapping
+- Configurable QoS settings
 
 ## How to Cite
 

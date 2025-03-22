@@ -9,3 +9,7 @@ windows:
     splits:
       - commands:
         - rosbag play --loop /costmap_1second.bag
+  # - name: COMP
+  #   splits:
+  #     - commands:
+  #       - /compression/universal_compressor.py _config:=/compression/compression.yaml

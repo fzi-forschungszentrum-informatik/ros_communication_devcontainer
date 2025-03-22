@@ -1,0 +1,15 @@
+parameters:
+  host_ip: machine_a_ip
+  host_name: machine_a
+
+  peers: machine_b_ip
+
+  in: true
+  topic_list_paths_incoming: /ws/example/3_multi_machine_relay/chatter_topic.txt
+  source_names: machine_b
+
+windows:
+  - name: LISTEN
+    splits:
+      - commands:
+        - ros2 topic echo /chatter

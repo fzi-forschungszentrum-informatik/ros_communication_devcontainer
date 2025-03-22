@@ -1,3 +1,4 @@
 parameters:
-  master_discovery: true
-  sync_suffix: "_sync"
+  ros_domain_id: 47
+  ros1_bridge: true
+  ros1_bridge_file: /ws/example/4_external_master/ros1_bridge.yaml

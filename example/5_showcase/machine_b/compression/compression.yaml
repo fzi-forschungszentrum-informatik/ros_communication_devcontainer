@@ -1,0 +1,2 @@
+compression:
+  - topic_regex: "^/costmap/costmap$"
