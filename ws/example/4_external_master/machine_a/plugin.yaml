@@ -1,10 +1,11 @@
 parameters:
-  ros_ip_key: machine_a_ip
-  discover_host_keys: machine_b_ip
+  host_ip: machine_a_ip
+  host_name: machine_a
 
-  master_sync: true
-  topic_list_paths_incoming: /ws/example/4_external_master/talker_topic.txt
-  sync_remote_nodes: true
-  check_host: false
+  peers: machine_b_ip
 
-  topic_relay_incoming: true
+  in: true
+  topic_list_paths_incoming: /ws/example/4_external_master/chatter_topic.txt
+  source_names: machine_b
+
+  ros1_ip_key: machine_a_ip

@@ -46,6 +46,8 @@ project_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(project_dir)
 
 from utils.getters import *
+from docker_.build_run import main as build_run
+from docker_.exec import main as exec
 
 # hotfix where usage of robot folders leads to problems
 unwanted_path = "/home/carpc/robot_folders/src/robot_folders"
@@ -57,22 +59,21 @@ def main(session_dir, external_terminal=False):
     print(f"Checking if the container '{container_name}' is running...")
     container_not_running = subprocess.run( f'docker ps -q -f name="{container_name}" | grep -q .', shell=True, check=False).returncode != 0
 
-    if container_not_running:
-        print("Container not running. Building and starting the container...")
-        subprocess.run([f"{project_dir}/docker/build_up.py"], check=True)
-    else:
-        print("Container is already running.")
-
     if external_terminal: 
         script_path = f"/ws/session/creation/run_session_in_external_terminal.py"
     else: 
         script_path = f"/ws/session/creation/run_session.py"
     docker_command = f"{script_path} --session-dir {session_dir}"
-    print(f"Executing script in container with command: {docker_command}")
-    docker_command_list = docker_command.split()
-    subprocess.run([f"docker", "exec", "-it", container_name, *docker_command_list], check=True)
-    print("Script execution in container completed.")
+    print(f"Command which will be run/executed in container: {docker_command}")
 
+    if container_not_running:
+        print("Container not running. Building and running the container with the command...")
+        build_run(run_command=["bash", "-i", "-c", docker_command])
+    else:
+        print("Container is already running. Directly executing command...")
+        exec(exec_command=["bash", "-i", "-c", docker_command])
+
+    print("Script execution in container completed.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=main.__doc__)

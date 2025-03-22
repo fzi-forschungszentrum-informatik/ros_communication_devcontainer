@@ -93,6 +93,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Use **vars(args) to convert argparse.Namespace to a dict, filtering out None values
-    resolved_data_str = ",".join(main(**{k: v for k, v in vars(args).items() if v is not None}))
+    resolved_data = main(**{k: v for k, v in vars(args).items() if v is not None})
 
+    resolved_data_str = ";".join(resolved_data)
     print(resolved_data_str)  # This will output the value to stdout, which can be captured in a shell

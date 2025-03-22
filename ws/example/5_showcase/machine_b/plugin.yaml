@@ -1,11 +1,29 @@
 parameters:
-  ros_ip_key: machine_b_ip
+  host_ip: machine_b_ip
+  host_name: machine_b
+  ros1_ip_key: machine_b_ip
+
+  peers: machine_a_ip
 
   topic_list_paths_incoming: /ws/example/5_showcase/topics_a_to_b.txt
+  source_names: machine_a
+
   topic_list_paths_outgoing: /ws/example/5_showcase/topics_b_to_a.txt
+
+  heartbeat_topics: "/bbeat"
+  heartbeat_delay_topic_1: "/abeat"
 
 windows:
   - name: COMP
     splits:
       - commands:
-        - /ws/session/content/compression/universal_compressor.py _config:=/ws/example/5_showcase/machine_b/compression.yaml
+        - ros2 run com_py universal_compressor --ros-args
+            -p config_file:=/ws/example/5_showcase/machine_b/compression.yaml
+      # - commands:
+      #   - ros2 run com_py universal_decompressor --ros-args
+      #       -p config_file:=/ws/example/5_showcase/machine_a/decompression.yaml
+      # - commands:
+      #   - ros2 run com_py hz_monitor
+      #       --ros-args -p topic:=/costmap/costmap_decompressed
+      # - commands:
+      #   - ros2 topic hz /costmap/costmap_decompressed

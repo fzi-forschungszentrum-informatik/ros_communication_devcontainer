@@ -2,59 +2,57 @@
 parameters:
   dir_path: # will be set automatically by create_session.py
   before_command: # e.g. "echo test"
-  ros_ip_key: # e.g. "machine_a ip"
-  ros_master_hostname_key: "localhost"
-  ros_master_port: 11311
-
-  ros_core: false
+  ros_domain_id: # e.g. 47
 
   rec: false
-  rec_command_1: "rosbag record --repeat-latched --split --size=5120 -o ${dir_path}/rec_sync_ -e '(.*)_sync$'"
+  rec_command_1: "ros2 bag record -o ${dir_path}/rec_sync_ --regex '(.*)_sync$' --max-bag-size 5120"
   rec_command_2:
   rec_command_3:
   rec_command_4:
 
-  master_discovery: false
-  discover_host_keys: "" # e.g. "machine_b ip + machine_c ip"
-  rpc_port: 11611
+  # General OTA parameters
+  # rmw_implementation: "rmw_cyclonedds_cpp"
+  host_ip: # e.g. "machine_a ip"
+  host_name: "" # e.g. "control_center"
+  peers: # e.g. "machine_b ip + machine_c ip"
+  qos_config_file: '""' # e.g. "/config/qos_config.yaml"
 
-  master_sync: false
-  sync_remote_nodes: false
-  check_host: true
-  sync_suffix: ""
-  topic_list_paths_incoming:
+  in: false
+  topic_list_paths_incoming: "" # e.g. "/machine_a,/machine_b"
+  source_names: "" # e.g. "control_center"
+  explicitly_adressed_incoming: false
+  locally_used_source_name_incoming: false
 
-  topic_relay_incoming: false
-  topic_list_prefixes_incoming: "" # e.g. /machine_a or "/machine_a /machine_b"
-  remove_target_prefix_incoming: # e.g. /machine_b
+  out: false
+  topic_list_paths_outgoing: "" # e.g. "/machine_a,/machine_b"
+  target_names: "" # e.g. "shuttle_ella,shuttle_anna"
+  locally_used_source_name_outgoing: false
 
-  topic_relay_outgoing: false
-  topic_list_prefixes_outgoing: # e.g. "/machine_a /machine_b"
-  target_prefix_outgoing: # e.g. /machine_a
-  topic_list_paths_outgoing:
+  # topic_list_prefixes_incoming: "" # e.g. "/machine_a,/machine_b"
+  # remove_target_prefix_incoming: '""' # e.g. /machine_b
+  # topic_list_prefixes_outgoing: "" # e.g. "/machine_a,/machine_b"
+  # target_prefix_outgoing: '""' # e.g. /machine_a
+  # sync_suffix: "_sync"
 
   topic_monitor: false
 
   heartbeat: false
-  heartbeat_topics: 
+  heartbeat_topics:
+  heartbeat_delay_topic_1:
+  heartbeat_delay_topic_2:
+
+  ros1_bridge: false
+  ros1_ip_key: # e.g. "machine_a ip"
+  ros1_master_hostname_key: "localhost"
+  ros1_master_port: 11311
+  ros1_bridge_file:
 
 common:
   before_commands:
     - if [ '${before_command}' != "None" ]; then ${before_command}; fi
-    - if [ '${ros_ip_key}' != "None" ]; then export ROS_IP=$(/ws/session/content/get_data_dict_entries.py -k "${ros_ip_key}") && echo ${ROS_IP}; fi
-    - export ROS_MASTER_URI=http://$(/ws/session/content/get_data_dict_entries.py -k "${ros_master_hostname_key}"):${ros_master_port}
+    - if [ '${ros_domain_id}' != "None" ]; then export ROS_DOMAIN_ID=${ros_domain_id}; fi
 
 windows:
-  - name: CORE
-    if: ros_core
-    layout: even-vertical
-    splits:
-      - commands:
-        - roscore --port ${ros_master_port}
-      - commands:
-        - sleep 2
-        - rosparam set enable_statistics true
-    delay: 2.5
   - name: REC
     if: rec
     layout: even-vertical
@@ -72,33 +70,69 @@ windows:
         - if [ "${rec_command_4}" == "None" ]; then exit; fi
         - "${rec_command_4}"
     delay: 1
-  - name: DISC
-    if: master_discovery
-    splits:
-      - commands:
-        - /ws/session/content/base/start_fkie_master_discovery.py _discover_host_keys:="${discover_host_keys}" _rpc_port:=${rpc_port}
-  - name: SYNC
-    if: master_sync
-    splits:
-      - commands:
-        - /ws/session/content/base/start_fkie_master_sync.py _check_host:="${check_host}" _sync_remote_nodes:="${sync_remote_nodes}" _topic_list_prefixes:="${topic_list_prefixes_incoming}" _topic_list_paths:="${topic_list_paths_incoming}" _sync_suffix:="${sync_suffix}"
   - name: IN
-    if: topic_relay_incoming
+    if: in
     splits:
       - commands:
-        - /ws/session/content/base/topic_relay_incoming.py _topic_list_prefixes:="${topic_list_prefixes_incoming}" _remove_target_prefix:="${remove_target_prefix_incoming}" _topic_list_paths:="${topic_list_paths_incoming}" _sync_suffix:="${sync_suffix}"
+        - export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+        - export CYCLONEDDS_URI=$(/ws/dds_configs/get_cyclonedds_xml.py -i "${host_ip}" -p "${peers}")
+        - export ROS_STATIC_PEERS=$(/ws/session/content/get_data_dict_entries.py -k "${peers}")
+        - ros2 run com_py bridge_in --ros-args
+            -p base_topic_files:=[${topic_list_paths_incoming}]
+            -p host_name:=${host_name}
+            -p qos_config_file:='${qos_config_file}'
+            -p source_names:=[${source_names}]
+            -p explicitly_adressed:=${explicitly_adressed_incoming}
+      - commands:
+        - ros2 run com_py relay_in --ros-args
+            -p base_topic_files:=[${topic_list_paths_incoming}]
+            -p host_name:=${host_name}
+            -p qos_config_file:='${qos_config_file}'
+            -p source_names:=[${source_names}]
+            -p explicitly_adressed:=${explicitly_adressed_incoming}
+            -p locally_used_source_name:=${locally_used_source_name_incoming}
   - name: OUT
-    if: topic_relay_outgoing
+    if: out
     splits:
       - commands:
-        - /ws/session/content/base/topic_relay_outgoing.py _topic_list_prefixes:="${topic_list_prefixes_outgoing}" _target_prefix:="${target_prefix_outgoing}" _topic_list_paths:="${topic_list_paths_outgoing}" _sync_suffix:="${sync_suffix}"
+        - export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+        - export CYCLONEDDS_URI=$(/ws/dds_configs/get_cyclonedds_xml.py -i "${host_ip}" -p "${peers}")
+        - export ROS_STATIC_PEERS=$(/ws/session/content/get_data_dict_entries.py -k "${peers}")
+        - ros2 run com_py bridge_out --ros-args
+            -p base_topic_files:=[${topic_list_paths_outgoing}]
+            -p host_name:=${host_name}
+            -p qos_config_file:='${qos_config_file}'
+            -p target_names:=[${target_names}]
+      - commands:
+        - ros2 run com_py relay_out --ros-args
+            -p base_topic_files:=[${topic_list_paths_outgoing}]
+            -p host_name:=${host_name}
+            -p qos_config_file:='${qos_config_file}'
+            -p target_names:=[${target_names}]
+            -p locally_used_source_name:=${locally_used_source_name_outgoing}
   - name: TOP
     if: topic_monitor
     splits:
       - commands:
-        - /ws/session/content/base/topic_monitor.py
+        - ros2 run com_py topic_monitor
   - name: BEAT
     if: heartbeat
     splits:
       - commands:
-        - /ws/session/content/base/heartbeat.py _topic_names:="${heartbeat_topics}"
+        - ros2 run com_py heartbeat --ros-args -p topic_names:=[${heartbeat_topics}]
+      - commands:
+        - if [ "${heartbeat_delay_topic_1}" == "None" ]; then exit; fi
+        - ros2 topic delay "${heartbeat_delay_topic_1}"
+      - commands:
+        - if [ "${heartbeat_delay_topic_2}" == "None" ]; then exit; fi
+        - ros2 topic delay "${heartbeat_delay_topic_2}"
+  - name: ROS1
+    if: ros1_bridge
+    splits:
+      - commands:
+        - if [ '${ros1_ip_key}' != "None" ]; then export ROS_IP=$(/ws/session/content/get_data_dict_entries.py -k "${ros1_ip_key}") && echo ${ROS1_IP}; fi
+        - source /ros1_ws/devel/setup.bash
+        - export ROS_MASTER_URI=http://$(/ws/session/content/get_data_dict_entries.py -k "${ros1_master_hostname_key}"):${ros1_master_port}
+        - rosparam load ${ros1_bridge_file}
+        - source /ros2_ros1_bridge_ws/install/setup.bash
+        - ros2 run ros1_bridge parameter_bridge

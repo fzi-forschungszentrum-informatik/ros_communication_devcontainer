@@ -5,3 +5,4 @@ config/data_dict.json
 
 # ignore temporary data
 __pycache__
+.session_readonly.yaml

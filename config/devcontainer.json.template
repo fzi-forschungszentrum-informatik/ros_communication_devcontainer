@@ -1,18 +1,19 @@
 // See https://containers.dev/implementors/json_reference/
 {
-	"build": { 
-		"dockerfile": "../docker/Dockerfile",
-	},
-    "overrideCommand": false,
+	"image": "#image_name",
+	"initializeCommand": "docker/build.py",
+	"postCreateCommand": "/entrypoint.sh",
 	"workspaceMount": "",
-	"workspaceFolder": "/ws/vsc-config/container.code-workspace",
-	"initializeCommand": ".devcontainer/re_generate_devcontainer_json.py",
-	"extensions": [
-        // Optional:
-        "ms-iot.vscode-ros",
-		"mhutchie.git-graph",
-	],
 	"runArgs": [
 		#docker_run_args,
+	],
+	"workspaceFolder": "/ws",
+	"extensions": [
+		"ms-vscode.cpptools",
+		"ms-vscode.cpptools-themes",
+		"twxs.cmake",
+        "donjayamanne.python-extension-pack",
+        "ms-iot.vscode-ros",
+		"mhutchie.git-graph"
 	]
 }

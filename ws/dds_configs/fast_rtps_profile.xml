@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<profiles>
+  <participant profile_name="default_profile" is_default_profile="true">
+    <rtps>
+      <useBuiltinTransports>true</useBuiltinTransports>
+      <builtin>
+        <!-- Turn off multicast, use unicast to known peers -->
+        <use_multicast>false</use_multicast>
+        <initialPeersList>
+          <!-- Example: unicast address of remote bridge or machine inside VPN -->
+          <address>10.8.0.50</address>
+          <address>10.8.0.51</address>
+        </initialPeersList>
+      </builtin>
+      <defaultSendPort>7400</defaultSendPort>
+    </rtps>
+  </participant>
+</profiles>

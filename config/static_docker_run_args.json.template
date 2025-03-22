@@ -1,6 +1,7 @@
 {
     "static_docker_run_args": [
-        "-u", "#uid:#gid",
+        "-e", "USER_UID=#uid",
+        "-e", "USER_GID=#gid",
         "--name", "#container_name",
         "--rm",
         "-v", "#project_dir/ws:/ws",

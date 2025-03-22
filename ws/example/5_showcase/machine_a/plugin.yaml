@@ -1,11 +1,26 @@
 parameters:
-  ros_ip_key: machine_a_ip
+  host_ip: machine_a_ip
+  host_name: machine_a
+  ros1_ip_key: machine_a_ip
+
+  peers: machine_b_ip
 
   topic_list_paths_incoming: /ws/example/5_showcase/topics_b_to_a.txt
+  source_names: machine_b
+
   topic_list_paths_outgoing: /ws/example/5_showcase/topics_a_to_b.txt
+
+  heartbeat_topics: "/abeat"
+  heartbeat_delay_topic_1: "/bbeat"
 
 windows:
   - name: DECO
     splits:
       - commands:
-        - /ws/session/content/compression/universal_decompressor.py _config:=/ws/example/5_showcase/machine_a/decompression.yaml
+        - ros2 run com_py universal_decompressor --ros-args
+            -p config_file:=/ws/example/5_showcase/machine_a/decompression.yaml
+      - commands:
+        - ros2 run com_py hz_monitor
+            --ros-args -p topic:=/costmap/costmap
+      - commands:
+        - ros2 topic hz /costmap/costmap
