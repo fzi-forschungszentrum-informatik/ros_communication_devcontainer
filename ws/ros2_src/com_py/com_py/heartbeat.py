@@ -65,7 +65,7 @@ class HeartbeatPublisher(Node):
     def publish_heartbeat(self):
         heartbeat_msg = PoseStamped()
         heartbeat_msg.header.stamp = self.get_clock().now().to_msg()
-        heartbeat_msg.header.frame_id = "heartbeat_frame"
+        heartbeat_msg.header.frame_id = "map"
 
         # In ROS2, the Header message no longer contains a 'seq' field.
         # We attempt to set it, and if not present, log a debug message.
