@@ -32,36 +32,62 @@
 # !\file
 #
 # \author  Martin Gontscharow <gontscharow@fzi.de>
-# \date    2024-11-13
+# \date    2025-04-03
 #
 #
 # ---------------------------------------------------------------------
 
-import os
-import sys
-import argparse
+import rclpy
+from rclpy.node import Node
+from visualization_msgs.msg import MarkerArray
 
-project_dir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(project_dir)
+class MarkerRemapper(Node):
+    def __init__(self):
+        super().__init__('marker_remapper')
 
-from ros2docker.build_run import main as build_run
+        self.declare_parameter('frame_prefix', '')
+        self.frame_prefix = self.get_parameter('frame_prefix').get_parameter_value().string_value
 
-# hotfix where usage of robot folders leads to problems
-# unwanted_path = "/home/carpc/robot_folders/src/robot_folders"
-# if unwanted_path in sys.path: 
-#     sys.path.remove(unwanted_path)
+        self.base_topics = [
+            '/visualization/planning/free/curvature_optimizing',
+            '/visualization/planning/free/curvature_planning',
+            '/visualization/planning/pso/submitted_visualization',
+            '/visualization/maneuver/announcements_barriers'
+        ]
 
-def main(session_dir):
-    script_path = f"/ws/session/creation/run_session.py"
-    docker_command = f"{script_path} --session-dir {session_dir}"
+        self.remapped_publishers = {}
 
-    print(f"Command which will be run in container: {docker_command}")
-    build_run(override={"run_type": "command", "command": docker_command})
+        self.setup_remappers()
 
-    print("Script execution in container completed.")
+    def marker_remapper(self, base_topic):
+        topic = base_topic
+        remapped_topic = f"{base_topic}_remapped"
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=main.__doc__)
-    parser.add_argument("-s", "--session-dir")
-    args = parser.parse_args()
-    main(**{k: v for k, v in vars(args).items() if v is not None})
+        pub = self.create_publisher(MarkerArray, remapped_topic, 1)
+        self.remapped_publishers[base_topic] = pub
+
+        def callback(data):
+            for marker in data.markers:
+                marker.header.frame_id = f"{self.frame_prefix}_{marker.header.frame_id}"
+                # marker.header.stamp = self.get_clock().now().to_msg()
+            pub.publish(data)
+
+        self.create_subscription(MarkerArray, topic, callback, 1)
+
+    def setup_remappers(self):
+        for base_topic in self.base_topics:
+            self.marker_remapper(base_topic)
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = MarkerRemapper()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()

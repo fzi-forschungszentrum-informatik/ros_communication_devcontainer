@@ -1,0 +1,26 @@
+{
+  mode: "#zen_mode",
+
+  #zen_endpoint_role: { endpoints: [ "#zen_transport/#zen_main_ip:#zen_main_port" ] },
+
+  plugins: 
+  { 
+    ros2dds: 
+    {
+      domain: #ros_domain_id,
+      allow: 
+      {
+        publishers: [ "#zen_pub_allow" ],
+        subscribers: [ "#zen_sub_allow" ],
+      }
+    } 
+  },
+
+  qos: 
+  {
+    publication: 
+    [
+#zen_qos_pub
+    ]
+  }
+}

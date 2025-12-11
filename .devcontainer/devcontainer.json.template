@@ -1,0 +1,25 @@
+// See https://containers.dev/implementors/json_reference/
+{
+	"image": "#image_name",
+	"initializeCommand": "./ros2docker/build.py",
+	"postCreateCommand": "/entrypoint.sh",
+	"workspaceMount": "",
+	"workspaceFolder": "/ws",
+	"runArgs": [
+		#docker_run_args,
+	],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+				"ms-vscode.cpptools",
+				"ms-vscode.cpptools-themes",
+				"twxs.cmake",
+				"ms-python.python",
+				"ms-python.debugpy",
+				"ms-python.vscode-pylance",
+				"ms-iot.vscode-ros",
+				"mhutchie.git-graph"
+            ]
+        }
+    }
+}

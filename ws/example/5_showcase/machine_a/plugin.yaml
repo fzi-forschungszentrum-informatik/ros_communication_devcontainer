@@ -1,7 +1,6 @@
 parameters:
   host_ip: machine_a_ip
   host_name: machine_a
-  ros1_ip_key: machine_a_ip
 
   peers: machine_b_ip
 
@@ -10,8 +9,12 @@ parameters:
 
   topic_list_paths_outgoing: /ws/example/5_showcase/topics_a_to_b.txt
 
-  heartbeat_topics: "/abeat"
-  heartbeat_delay_topic_1: "/bbeat"
+  heartbeat_topics: /abeat
+  heartbeat_delay_topic_1: /bbeat
+
+  zen_endpoint_role: listen
+  zen_pub_allow: /ota/machine_a/.*
+  zen_sub_allow: /ota/machine_b/.*
 
 windows:
   - name: DECO

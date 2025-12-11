@@ -1,0 +1,28 @@
+<CycloneDDS>
+    <Domain>
+        <General>
+            <AllowMulticast>false</AllowMulticast>
+            <Interfaces>
+                <NetworkInterface address="#host_ip"/>
+            </Interfaces>
+            <MulticastRecvNetworkInterfaceAddresses>none</MulticastRecvNetworkInterfaceAddresses>
+            <FragmentSize>1200B</FragmentSize>
+            <MaxMessageSize>1MB</MaxMessageSize>
+        </General>
+
+        <Discovery>
+            <Peers>
+                #peers
+            </Peers>
+            <EnableTopicDiscoveryEndpoints>false</EnableTopicDiscoveryEndpoints>
+            <LeaseDuration>60s</LeaseDuration>
+            <SPDPInterval>30s</SPDPInterval>
+        </Discovery>
+
+        <Internal>
+            <BuiltinEndpointSet>minimal</BuiltinEndpointSet>
+            <HeartbeatInterval min="500 ms" minsched="1 s" max="8 s"/>
+            <SquashParticipants>true</SquashParticipants>
+        </Internal>
+    </Domain>
+</CycloneDDS>

@@ -37,31 +37,38 @@
 #
 # ---------------------------------------------------------------------
 
-import os
-import sys
-import argparse
+import json
+import re
 
-project_dir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(project_dir)
+def remove_comments(json_like):
+    """Remove C-style comments from a JSON-like string."""
+    pattern = r'//.*?$|/\*.*?\*/'
+    return re.sub(pattern, '', json_like, flags=re.DOTALL | re.MULTILINE)
 
-from ros2docker.build_run import main as build_run
+def remove_empty_lines(text):
+    """Remove empty lines from a text string while keeping line breaks."""
+    return "\n".join([line for line in text.splitlines() if line.strip()])
 
-# hotfix where usage of robot folders leads to problems
-# unwanted_path = "/home/carpc/robot_folders/src/robot_folders"
-# if unwanted_path in sys.path: 
-#     sys.path.remove(unwanted_path)
+def json_to_dict(path_to_json):
+    with open(path_to_json, 'r') as file:
+        content = file.read()
 
-def main(session_dir):
-    script_path = f"/ws/session/creation/run_session.py"
-    docker_command = f"{script_path} --session-dir {session_dir}"
+        content_no_comments = remove_comments(content)
+        # Return parsed JSON
+        return json.loads(content_no_comments)
 
-    print(f"Command which will be run in container: {docker_command}")
-    build_run(override={"run_type": "command", "command": docker_command})
+# Function to load template and perform substitutions
+def process_template(template_path, substitutions, remove_comments_flag=True, remove_empty_lines_flag=True):
+    # Read the template content
+    with open(template_path, 'r') as file:
+        content = file.read()
+    # Perform substitutions
+    for key, value in substitutions.items():
+        content = content.replace(key, value)
 
-    print("Script execution in container completed.")
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=main.__doc__)
-    parser.add_argument("-s", "--session-dir")
-    args = parser.parse_args()
-    main(**{k: v for k, v in vars(args).items() if v is not None})
+    if remove_comments_flag:
+        content = remove_comments(content)
+    if remove_empty_lines_flag:
+        content = remove_empty_lines(content)
+    
+    return content

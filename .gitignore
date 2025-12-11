@@ -1,7 +1,8 @@
 # ignore local system specific settings
 .devcontainer/devcontainer.json
-config/local.json
-config/data_dict.json
+data_dict.json
+config.json
+zenoh.json5
 
 # ignore temporary data
 __pycache__

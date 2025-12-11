@@ -1,0 +1,12 @@
+{
+  "container_name": "machine_a_logic",
+
+  "run_type": "catmux",
+  "catmux_file": "/external_session.yaml",
+
+  "run_args": [ 
+    "--network", "host", 
+    "-v", "./external_session.yaml:/external_session.yaml",
+    "-e", "ROS_DOMAIN_ID=47"
+  ]
+}

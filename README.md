@@ -1,6 +1,6 @@
 # ROS Communication DevContainer
 
-The ROS Communication DevContainer is a Docker-based solution designed to streamline the synchronization of ROS topics across Linux machines. It supports both ROS1 (Noetic) and ROS2, with built-in compression capabilities for efficient data transfer. This project aligns with the publication "Scalable Remote Operation for Autonomous Vehicles: Integration of Cooperative Perception and Open Source Communication."
+The ROS Communication DevContainer is a Docker-based solution designed to streamline the synchronization of ROS2 topics across Linux machines. It provides built-in compression and routing capabilities for over-the-air (OTA) data transfer: selected topics are remapped into an OTA namespace and transmitted either via direct DDS (CycloneDDS) or through a Zenoh router. This project aligns with the publication *“Scalable Remote Operation for Autonomous Vehicles: Integration of Cooperative Perception and Open Source Communication.”*
 
 <details>
 <summary>Key Features</summary>
@@ -8,8 +8,7 @@ The ROS Communication DevContainer is a Docker-based solution designed to stream
 - **Minimal Dependencies**: Only Docker is needed to get started, simplifying the setup process.
 - **Isolation**: Operates in a separate Docker container, ensuring minimal impact on existing ROS setups.
 - **Centralized Configuration Management**: All configurations are stored and managed in this repository.
-- **Cross-ROS Support**: Compatible with both ROS1 Noetic and ROS2.
-- **Advanced Compression**: Built-in compression capabilities for efficient data transfer.
+- **Compression**: Built-in compression capabilities for efficient data transfer.
 - **QoS Configuration**: Flexible Quality of Service settings for optimized communication.
 
 </details>
@@ -26,8 +25,8 @@ The ROS Communication DevContainer is a Docker-based solution designed to stream
 
 1. Fork this repository
 2. Configure your environment:
-   - `data_dict.json`: Maps semantic names to resources (example in `config/examples/data_dict.json`)
-   - `local.json`: Container-specific settings (example in `config/examples/local.json`)
+   - `data_dict.json`: Maps semantic names to resources (example in `data_dict.json.examples`)
+   - `local.json`: Container-specific settings (example in `local.json.examples`)
 
 ### Configuration Files
 
@@ -102,15 +101,15 @@ This example demonstrates ROS2 communication between distinct machines using rel
 </details>
 
 <details>
-<summary>Example 4: External Master</summary>
+<summary>Example 4: External Container</summary>
 
 This example adds a layer of separation between the main logic and communication, allowing existing local ROS1 code to remain unchanged.
 
-- On `machine_a`, navigate to `example/4_external_master/machine_a` and execute the following commands in separate terminals:
-  - `./run_master.py`
+- On `machine_a`, navigate to `example/4_external_container/machine_a` and execute the following commands in separate terminals:
+  - `./run_external.py`
   - `./run_communication.sh`
-- On `machine_b`, navigate to `example/4_external_master/machine_b` and execute the following commands in separate terminals:
-  - `./run_master.py`
+- On `machine_b`, navigate to `example/4_external_container/machine_b` and execute the following commands in separate terminals:
+  - `./run_external.py`
   - `./run_communication.sh`
 - Confirm that the master on `machine_a` acknowledges the messages from the master on `machine_b`.
 
@@ -122,15 +121,14 @@ This example adds a layer of separation between the main logic and communication
 This example demonstrates handling more complex data, such as an occupancy grid map, which is larger and therefore uses compression.
 
 - On `machine_a`, navigate to `example/5_showcase/machine_a` and execute the following commands in separate terminals:
-  - `./run_master.py`
+  - `./run_external.py`
   - `./run_communication.sh`
 - On `machine_b`, navigate to `example/5_showcase/machine_b` and execute the following commands in separate terminals:
-  - `./run_master.py`
+  - `./run_external.py`
   - `./run_communication.sh`
 - Confirm that the master on `machine_a` acknowledges the compressed messages from the master on `machine_b`.
 
 The showcase example includes:
-- ROS1 to ROS2 bridge functionality
 - Automatic topic compression and decompression
 - QoS configuration for optimized communication
 - Heartbeat monitoring between machines
@@ -146,16 +144,29 @@ The system includes universal compression capabilities for ROS topics:
 ```yaml
 compression:
   - topic_regex: ".*"
-    algorithm: "bz2"  # Optional, defaults to bz2
+    algorithm: "bz2"  # Optional
     add_suffix: "_compressed"  # Optional
 ```
 
-### Cross-ROS Communication
+## Position in the OTA Communication Landscape
 
-Support for both ROS1 and ROS2 environments:
-- Bridge nodes for cross-version communication
-- Automatic topic discovery and mapping
-- Configurable QoS settings
+This repository fits into a broader set of ROS-based OTA communication approaches:
+
+- **Direct ROS 2 DDS Communication**  
+  Native DDS (CycloneDDS, Fast DDS), often with custom configuration for constrained or long-range links.  
+  The examples in this repository use CycloneDDS to illustrate this approach.
+
+- **ROS 2 over Router-like Backbones**  
+  Some RMW have their own DDS Routers such as https://github.com/eProsima/DDS-Router
+  Example 5 has a flag to use Zenoh + `ros2dds` acts as a lightweight router layer.
+
+- **MQTT-based Approaches**  
+  Common in cloud/IoT scenarios. Example:  
+  <https://github.com/ika-rwth-aachen/mqtt_client>
+
+- **Custom TCP/UDP Teleoperation Stacks**  
+  Some frameworks implement their manual tcp/udp transportion layers. Example:  
+  <https://github.com/TUMFTM/teleoperated_driving>
 
 ## How to Cite
 

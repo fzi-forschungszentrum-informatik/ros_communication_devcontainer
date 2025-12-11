@@ -1,8 +1,5 @@
-parameters:
-  ros_domain_id: 47
 common:
   before_commands:
     - export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-    - export CYCLONEDDS_URI=$(/ws/dds_configs/get_cyclonedds_xml.py -i ${host_ip} -p "${peers}")
+    - export CYCLONEDDS_URI=$(/ws/ota_configs/get_cyclonedds_xml.py -i ${host_ip} -p "${peers}")
     - export ROS_STATIC_PEERS=$(/ws/session/content/get_data_dict_entries.py -k "${peers}")
-    - export ROS_DOMAIN_ID=${ros_domain_id}

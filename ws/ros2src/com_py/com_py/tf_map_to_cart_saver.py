@@ -32,36 +32,68 @@
 # !\file
 #
 # \author  Martin Gontscharow <gontscharow@fzi.de>
-# \date    2024-11-13
+# \date    2025-04-03
 #
 #
 # ---------------------------------------------------------------------
 
+import rclpy
+from rclpy.node import Node
+from tf2_msgs.msg import TFMessage
+import pickle
 import os
-import sys
-import argparse
+from rclpy.qos import QoSProfile, QoSHistoryPolicy, DurabilityPolicy
 
-project_dir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(project_dir)
+class StaticTfSaver(Node):
+    def __init__(self):
+        super().__init__('static_tf_saver')
 
-from ros2docker.build_run import main as build_run
+        self.target_parent = 'map'
+        self.target_child = 'cart'
+        self.output_file = '/ws/map_to_cart.pkl'
 
-# hotfix where usage of robot folders leads to problems
-# unwanted_path = "/home/carpc/robot_folders/src/robot_folders"
-# if unwanted_path in sys.path: 
-#     sys.path.remove(unwanted_path)
+        qos = QoSProfile(
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=100,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+        )
 
-def main(session_dir):
-    script_path = f"/ws/session/creation/run_session.py"
-    docker_command = f"{script_path} --session-dir {session_dir}"
+        self.sub = self.create_subscription(
+            TFMessage,
+            '/tf_static',
+            self.tf_callback,
+            qos
+        )
+        self.get_logger().info("Waiting for static transform map → cart...")
 
-    print(f"Command which will be run in container: {docker_command}")
-    build_run(override={"run_type": "command", "command": docker_command})
+    def tf_callback(self, msg):
+        self.get_logger().debug(f"Received TF message with {len(msg.transforms)} transforms")
 
-    print("Script execution in container completed.")
+        for i, transform in enumerate(msg.transforms):
+            self.get_logger().debug(
+                f"Transform #{i}: parent='{transform.header.frame_id}', child='{transform.child_frame_id}'"
+            )
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=main.__doc__)
-    parser.add_argument("-s", "--session-dir")
-    args = parser.parse_args()
-    main(**{k: v for k, v in vars(args).items() if v is not None})
+            if (transform.header.frame_id == self.target_parent and
+                transform.child_frame_id == self.target_child):
+
+                self.get_logger().info(
+                    f"Match found: {transform.header.frame_id} → {transform.child_frame_id}"
+                )
+
+                with open(self.output_file, 'wb') as f:
+                    pickle.dump(transform, f)
+
+                self.get_logger().info(
+                    f"Saved static TF {self.target_parent} → {self.target_child} to {self.output_file}"
+                )
+                rclpy.shutdown()
+                break
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = StaticTfSaver()
+    rclpy.spin(node)
+
+if __name__ == '__main__':
+    main()

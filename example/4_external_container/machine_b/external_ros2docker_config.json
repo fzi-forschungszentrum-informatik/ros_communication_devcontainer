@@ -1,0 +1,11 @@
+{
+  "container_name": "machine_b_logic",
+
+  "run_type": "command",
+  "command": ["ros2", "topic", "pub", "-r", "1", "/chatter", "std_msgs/String", "data: 'hello from talker'"],
+
+  "run_args": [ 
+    "--network", "host", 
+    "-e", "ROS_DOMAIN_ID=47"
+  ]
+}

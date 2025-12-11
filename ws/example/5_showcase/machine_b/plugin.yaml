@@ -1,7 +1,6 @@
 parameters:
   host_ip: machine_b_ip
   host_name: machine_b
-  ros1_ip_key: machine_b_ip
 
   peers: machine_a_ip
 
@@ -10,8 +9,21 @@ parameters:
 
   topic_list_paths_outgoing: /ws/example/5_showcase/topics_b_to_a.txt
 
-  heartbeat_topics: "/bbeat"
-  heartbeat_delay_topic_1: "/abeat"
+  heartbeat_topics: /bbeat
+  heartbeat_delay_topic_1: /abeat
+
+  zen_endpoint_role: connect
+  zen_pub_allow: /ota/machine_b/.*
+  zen_sub_allow: /ota/machine_a/.*
+  zen_qos_pub: |1
+         {
+           key_exprs: [ "ota/**/costmap/costmap_compressed" ],
+           config: { priority: "data" } // for tcp add express: true
+         },
+         {
+           key_exprs: [ "ota/**/bbeat" ],
+           config: { priority: "real_time" }
+         }
 
 windows:
   - name: COMP

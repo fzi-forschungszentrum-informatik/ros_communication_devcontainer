@@ -1,0 +1,13 @@
+{
+  "container_name": "machine_a_logic",
+
+  "run_type": "command",
+  "command": "/wait_for_echo_topic.sh",
+
+    
+  "run_args": [ 
+    "--network", "host", 
+    "-v", "./wait_for_echo_topic.sh:/wait_for_echo_topic.sh",
+    "-e", "ROS_DOMAIN_ID=47"
+  ]
+}

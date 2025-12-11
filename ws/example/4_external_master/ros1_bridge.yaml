@@ -1,5 +1,0 @@
-topics:
-  -
-    topic: /chatter  # Topic name on both ROS 1 and ROS 2
-    type: std_msgs/msg/String  # Type of topic to bridge
-    queue_size: 1  # Queue size

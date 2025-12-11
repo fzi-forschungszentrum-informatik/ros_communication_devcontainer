@@ -2,7 +2,6 @@
 parameters:
   dir_path: # will be set automatically by create_session.py
   before_command: # e.g. "echo test"
-  ros_domain_id: # e.g. 47
 
   rec: false
   rec_command_1: "ros2 bag record -o ${dir_path}/rec_sync_ --regex '(.*)_sync$' --max-bag-size 5120"
@@ -11,7 +10,6 @@ parameters:
   rec_command_4:
 
   # General OTA parameters
-  # rmw_implementation: "rmw_cyclonedds_cpp"
   host_ip: # e.g. "machine_a ip"
   host_name: "" # e.g. "control_center"
   peers: # e.g. "machine_b ip + machine_c ip"
@@ -28,29 +26,32 @@ parameters:
   target_names: "" # e.g. "shuttle_ella,shuttle_anna"
   locally_used_source_name_outgoing: false
 
-  # topic_list_prefixes_incoming: "" # e.g. "/machine_a,/machine_b"
-  # remove_target_prefix_incoming: '""' # e.g. /machine_b
-  # topic_list_prefixes_outgoing: "" # e.g. "/machine_a,/machine_b"
-  # target_prefix_outgoing: '""' # e.g. /machine_a
-  # sync_suffix: "_sync"
+  # RMW specific OTA parameters
+  zen: false # to use zenoh for OTA communication instaed of CycloneDDS
+  zen_mode: # e.g. router, peer or client
+  zen_endpoint_role: # e.g. listen or connect
+  zen_transport: # e.g. tcp or udp
+  zen_main_ip: # ip address of zenoh main endpoint (usually listening router)
+  zen_main_port: # e.g. 7447
+  zen_pub_allow: # e.g. /ota/machine_a/.*
+  zen_sub_allow: # e.g. /ota/machine_b/.*
+  zen_qos_pub:
+  zen_config_file: ${dir_path}/zenoh.json5
+  zen_config_override:
 
+  # Utility
   topic_monitor: false
+
+  network_monitor: true
 
   heartbeat: false
   heartbeat_topics:
   heartbeat_delay_topic_1:
   heartbeat_delay_topic_2:
 
-  ros1_bridge: false
-  ros1_ip_key: # e.g. "machine_a ip"
-  ros1_master_hostname_key: "localhost"
-  ros1_master_port: 11311
-  ros1_bridge_file:
-
 common:
   before_commands:
     - if [ '${before_command}' != "None" ]; then ${before_command}; fi
-    - if [ '${ros_domain_id}' != "None" ]; then export ROS_DOMAIN_ID=${ros_domain_id}; fi
 
 windows:
   - name: REC
@@ -70,13 +71,26 @@ windows:
         - if [ "${rec_command_4}" == "None" ]; then exit; fi
         - "${rec_command_4}"
     delay: 1
+  - name: ZEN
+    if: zen
+    splits:
+      - commands:
+        - export RUST_LOG=zenoh=debug,zenoh_bridge_ros2dds=debug
+        - if [ '${zen_config_override}' != "None" ]; then export ZENOH_CONFIG_OVERRIDE='${zen_config_override}'; fi
+        - /ws/ota_configs/create_zenoh_json5.py -m ${zen_mode} -e ${zen_endpoint_role} -t ${zen_transport} -i ${zen_main_ip} -r ${zen_main_port} -p ${zen_pub_allow} -s ${zen_sub_allow} -q '${zen_qos_pub}' -f ${zen_config_file}
+        - zenohd -c ${zen_config_file}
+      # Debugging commands:
+      #   - zenohd -c ${zen_config_file} --rest-http-port 8000 2>&1 | tee ${zen_config_file}.log
+      # - commands:
+      #   - sleep 45
+      #   - curl http://localhost:8000/@/local/ros2/route/** 2>&1 | tee ${zen_config_file}.route-log
   - name: IN
     if: in
     splits:
       - commands:
-        - export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-        - export CYCLONEDDS_URI=$(/ws/dds_configs/get_cyclonedds_xml.py -i "${host_ip}" -p "${peers}")
-        - export ROS_STATIC_PEERS=$(/ws/session/content/get_data_dict_entries.py -k "${peers}")
+        - case ${zen} in [Ff]alse) export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp;; esac
+        - case ${zen} in [Ff]alse) export CYCLONEDDS_URI=$(/ws/ota_configs/get_cyclonedds_xml.py -i "${host_ip}" -p "${peers}");; esac
+        - case ${zen} in [Ff]alse) export ROS_STATIC_PEERS=$(/ws/session/content/get_data_dict_entries.py -k "${peers}");; esac
         - ros2 run com_py bridge_in --ros-args
             -p base_topic_files:=[${topic_list_paths_incoming}]
             -p host_name:=${host_name}
@@ -95,9 +109,9 @@ windows:
     if: out
     splits:
       - commands:
-        - export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-        - export CYCLONEDDS_URI=$(/ws/dds_configs/get_cyclonedds_xml.py -i "${host_ip}" -p "${peers}")
-        - export ROS_STATIC_PEERS=$(/ws/session/content/get_data_dict_entries.py -k "${peers}")
+        - case ${zen} in [Ff]alse) export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp;; esac
+        - case ${zen} in [Ff]alse) export CYCLONEDDS_URI=$(/ws/ota_configs/get_cyclonedds_xml.py -i "${host_ip}" -p "${peers}");; esac
+        - case ${zen} in [Ff]alse) export ROS_STATIC_PEERS=$(/ws/session/content/get_data_dict_entries.py -k "${peers}");; esac
         - ros2 run com_py bridge_out --ros-args
             -p base_topic_files:=[${topic_list_paths_outgoing}]
             -p host_name:=${host_name}
@@ -115,6 +129,13 @@ windows:
     splits:
       - commands:
         - ros2 run com_py topic_monitor
+  - name: NET
+    if: network_monitor
+    splits:
+      - commands:
+        - ip=$(/ws/session/content/get_data_dict_entries.py -k "${host_ip}")
+        - interface=$(ip -o addr | awk '/'${ip//./\\.}'\/[0-9]+/ {print $2; exit}')
+        - sudo iftop -i "$interface" -f "host $ip"
   - name: BEAT
     if: heartbeat
     splits:
@@ -122,17 +143,7 @@ windows:
         - ros2 run com_py heartbeat --ros-args -p topic_names:=[${heartbeat_topics}]
       - commands:
         - if [ "${heartbeat_delay_topic_1}" == "None" ]; then exit; fi
-        - ros2 topic delay "${heartbeat_delay_topic_1}"
+        - ros2 topic delay ${heartbeat_delay_topic_1}
       - commands:
         - if [ "${heartbeat_delay_topic_2}" == "None" ]; then exit; fi
-        - ros2 topic delay "${heartbeat_delay_topic_2}"
-  - name: ROS1
-    if: ros1_bridge
-    splits:
-      - commands:
-        - if [ '${ros1_ip_key}' != "None" ]; then export ROS_IP=$(/ws/session/content/get_data_dict_entries.py -k "${ros1_ip_key}") && echo ${ROS1_IP}; fi
-        - source /ros1_ws/devel/setup.bash
-        - export ROS_MASTER_URI=http://$(/ws/session/content/get_data_dict_entries.py -k "${ros1_master_hostname_key}"):${ros1_master_port}
-        - rosparam load ${ros1_bridge_file}
-        - source /ros2_ros1_bridge_ws/install/setup.bash
-        - ros2 run ros1_bridge parameter_bridge
+        - ros2 topic delay ${heartbeat_delay_topic_2}

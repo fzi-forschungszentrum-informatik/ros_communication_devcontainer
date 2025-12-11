@@ -1,0 +1,29 @@
+{
+  "image_name":     "ros-communication",      // Docker image to build
+  "container_name": "ros-communication",      // Name of the running container
+
+  // mounts the ws directory into the container. Optionally this ws also contains a ros2src.
+  "mount_ws": true,
+
+  // Enable X11/Wayland GUI forwarding
+  "enable_gui_forwarding": true,
+
+  // Extra docker run arguments
+  "run_args": [
+    "-e", "ROS_DOMAIN_ID=47",
+    "-e", "BUILD_ROS2WS=1",
+    "-e", "CHECK_ROS2WS_DEPENDENCIES=1",
+    "-v", "./data_dict.json.example:/data_dict.json",
+    "--network", "host"
+  ],
+
+  // Forward your local SSH agent into the container
+  "forward_ssh_agent": true,
+
+  // Build-time arguments — defaults shown; override if necessary
+  "build_args": {
+    "BASE_IMAGE":                    "osrf/ros:kilted-desktop-full-noble",
+    "APT_PACKAGES":                  "iputils-ping psmisc net-tools snmp wireless-tools nload iftop iproute2",
+    "PIP_PACKAGES":                  "numpy>=1.26,<2 lz4 pysnmp speedtest-cli psutil zstandard opencv-python"
+  }
+}

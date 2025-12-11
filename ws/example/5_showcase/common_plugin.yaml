@@ -1,13 +1,16 @@
 parameters:
-  ros_domain_id: 47
-  qos_config_file: /ws/example/5_showcase/qos.yaml
-  ros1_bridge: true
-  ros1_bridge_file: /ws/example/5_showcase/ros1_bridge.yaml
+  qos_config_file: /ws/example/5_showcase/qos.yaml # ota qos only applied for cyclone not zenoh
 
   in: true
   out: true
   heartbeat: true
   topic_monitor: true
+
+  zen: false # set to false to use cyclone instead of zenoh
+  zen_mode: router
+  zen_transport: udp
+  zen_main_ip: machine_a_ip
+  zen_main_port: 7447
 
 windows:
   - name: GOAL

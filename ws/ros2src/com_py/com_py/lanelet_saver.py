@@ -32,36 +32,49 @@
 # !\file
 #
 # \author  Martin Gontscharow <gontscharow@fzi.de>
-# \date    2024-11-13
+# \date    2025-04-03
 #
 #
 # ---------------------------------------------------------------------
 
+import rclpy
+from rclpy.node import Node
+from visualization_msgs.msg import MarkerArray
+import pickle
 import os
-import sys
-import argparse
 
-project_dir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(project_dir)
+class MarkerSaver(Node):
+    def __init__(self):
+        super().__init__('marker_saver')
 
-from ros2docker.build_run import main as build_run
+        self.output_file = '/ws/lanelets.pkl'
 
-# hotfix where usage of robot folders leads to problems
-# unwanted_path = "/home/carpc/robot_folders/src/robot_folders"
-# if unwanted_path in sys.path: 
-#     sys.path.remove(unwanted_path)
+        self.subscription = self.create_subscription(
+            MarkerArray,
+            '/visualization/map/lanelets',
+            self.marker_callback,
+            10
+        )
 
-def main(session_dir):
-    script_path = f"/ws/session/creation/run_session.py"
-    docker_command = f"{script_path} --session-dir {session_dir}"
+        self.got_data = False
+        self.get_logger().info("Waiting for Lanelets on /visualization/map/lanelets...")
 
-    print(f"Command which will be run in container: {docker_command}")
-    build_run(override={"run_type": "command", "command": docker_command})
+    def marker_callback(self, msg: MarkerArray):
+        if self.got_data:
+            return
 
-    print("Script execution in container completed.")
+        self.got_data = True
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=main.__doc__)
-    parser.add_argument("-s", "--session-dir")
-    args = parser.parse_args()
-    main(**{k: v for k, v in vars(args).items() if v is not None})
+        with open(self.output_file, 'wb') as f:
+            pickle.dump(msg, f)
+
+        self.get_logger().info(f"Saved MarkerArray to {self.output_file}")
+        rclpy.shutdown()
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = MarkerSaver()
+    rclpy.spin(node)
+
+if __name__ == '__main__':
+    main()
