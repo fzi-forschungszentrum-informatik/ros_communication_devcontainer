@@ -153,19 +153,19 @@ compression:
 This repository fits into a broader set of ROS-based OTA communication approaches:
 
 - **Direct ROS 2 DDS Communication**  
-  Native DDS (CycloneDDS, Fast DDS), often with custom configuration for constrained or long-range links.  
+  Native DDS (CycloneDDS, Fast DDS), often with custom configuration for constrained or long-range links.
   The examples in this repository use CycloneDDS to illustrate this approach.
 
 - **ROS 2 over Router-like Backbones**  
-  Some RMW have their own DDS Routers such as https://github.com/eProsima/DDS-Router
-  Example 5 has a flag to use Zenoh + `ros2dds` acts as a lightweight router layer.
+  Some RMW have their own DDS Routers such as https://github.com/eProsima/DDS-Router.
+  Example 5 has a flag for using Zenoh to act as a lightweight router layer.
 
 - **MQTT-based Approaches**  
   Common in cloud/IoT scenarios. Example:  
   <https://github.com/ika-rwth-aachen/mqtt_client>
 
 - **Custom TCP/UDP Teleoperation Stacks**  
-  Some frameworks implement their manual tcp/udp transportion layers. Example:  
+  Some frameworks implement their manual tcp/udp transportion layers. Example:
   <https://github.com/TUMFTM/teleoperated_driving>
 
 ## How to Cite
