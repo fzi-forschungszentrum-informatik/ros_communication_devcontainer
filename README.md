@@ -135,9 +135,7 @@ The showcase example includes:
 
 </details>
 
-## Advanced Features
-
-### Compression Support
+## Compression Support
 
 The system includes universal compression capabilities for ROS topics:
 
@@ -147,6 +145,14 @@ compression:
     algorithm: "bz2"  # Optional
     add_suffix: "_compressed"  # Optional
 ```
+
+## Choosing the Transport Layer: CycloneDDS or Zenoh
+
+- **Use CycloneDDS** when all machines share the **same `ROS_DOMAIN_ID`**.  
+  This is the simplest and most direct configuration.
+
+- **Use Zenoh** when machines **require different domain IDs**.  
+  Zenoh naturally bridges DDS domains and avoids additional ROS 2 domain-bridging complexity.
 
 ## Position in the OTA Communication Landscape
 
