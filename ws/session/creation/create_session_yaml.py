@@ -42,8 +42,8 @@ import argparse
 import os
 import stat
 
-def main(session_dir):
-    spec_file = os.path.join(session_dir, 'session_specification.yaml')
+def main(peer_dir):
+    spec_file = os.path.join(peer_dir, 'session_specification.yaml')
 
     with open(spec_file, 'r') as f:
         spec = yaml.safe_load(f)
@@ -60,7 +60,7 @@ def main(session_dir):
 
     # Load and merge each plugin file
     for plugin in plugins:
-        plugin_path = os.path.join(session_dir, plugin)  # Adjust path relative to session directory
+        plugin_path = os.path.join(peer_dir, plugin)  # Adjust path relative to session peer directory
         with open(plugin_path, 'r') as f:
             plugin_data = yaml.safe_load(f) or {}
 
@@ -80,11 +80,8 @@ def main(session_dir):
     if parameters:
         merged_config['parameters'] = {**merged_config['parameters'], **parameters}
 
-    # Add the session_dir parameter
-    merged_config['parameters']['session_dir'] = session_dir
-
     # Output file path
-    output_file = os.path.join(session_dir, '.session_readonly.yaml')
+    output_file = os.path.join(peer_dir, '.session_readonly.yaml')
 
     # Remove the output file if it already exists to allow overwriting
     if os.path.exists(output_file):
@@ -99,7 +96,7 @@ def main(session_dir):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Merge multiple YAML plugin files into a full session configuration.")
-    parser.add_argument('-s', '--session-dir', required=True, help='Session directory containing the session_specification.yaml file')
+    parser.add_argument('-p', '--peer-dir', required=True, help='Peer directory containing the session_specification.yaml file')
     args = parser.parse_args()
 
-    main(args.session_dir)
+    main(args.peer_dir)

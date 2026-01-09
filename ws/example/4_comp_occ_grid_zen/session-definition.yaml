@@ -1,0 +1,28 @@
+peers:
+  a:
+    ip_key: "machine_a_ip"
+  b:
+    ip_key: "machine_b_ip"
+
+shared:
+  use_topic_monitor: true
+  use_heartbeat: true
+
+  zenoh:
+    transport: udp
+    main_peer: a
+    main_port: 7447
+
+topics:
+  b_to_a:
+    - topic: "/heartbeat_b"
+      zen_qos:
+        priority: real_time
+    - topic: "/costmap/costmap"
+      processing:
+        restamp_if: true
+        compress: true
+      zen_qos:
+        priority: data
+        express: true
+

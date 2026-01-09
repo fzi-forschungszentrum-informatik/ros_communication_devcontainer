@@ -54,15 +54,20 @@ class OtaRelayIn(BaseBridgeRelay):
             pub_role='local_pub'
         )
 
+    def declare_additional_parameters(self):
+        self.local_explicitly_targeted = bool(self.declare_parameter('local_explicitly_targeted', False).value)
+        # Semantics: if true, local side uses /{source_name}/ prefix.
+        self.app_keep_source_name = bool(self.declare_parameter('app_keep_source_name', False).value)
+
     def resolve_topic_triplets(self):
-        target_names = [self.host_name] if self.explicitly_adressed else []
+        target_names = [self.host_name] if self.local_explicitly_targeted else []
         return resolve_topics(
             self.node_role,
             self.base_topic_files,
             self.source_names,
             target_names,
-            self.locally_used_source_name,
-            False
+            locally_used_source_name=self.app_keep_source_name,
+            locally_used_expansion=False
         )
 
 def main(args=None):

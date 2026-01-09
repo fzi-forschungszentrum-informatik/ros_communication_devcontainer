@@ -3,28 +3,22 @@ parameters:
   dir_path: # will be set automatically by create_session.py
   before_command: # e.g. "echo test"
 
-  rec: false
-  rec_command_1: "ros2 bag record -o ${dir_path}/rec_sync_ --regex '(.*)_sync$' --max-bag-size 5120"
-  rec_command_2:
-  rec_command_3:
-  rec_command_4:
-
   # General OTA parameters
-  host_ip: # e.g. "machine_a ip"
-  host_name: "" # e.g. "control_center"
-  peers: # e.g. "machine_b ip + machine_c ip"
+  ip_local: # e.g. "machine_a ip"
+  ip_remote: # e.g. "machine_b ip + machine_c ip"
+  local_name: "" # e.g. "control_center"
+  remote_name: "" # e.g. "shuttle_ella"
   qos_config_file: '""' # e.g. "/config/qos_config.yaml"
 
   in: false
-  topic_list_paths_incoming: "" # e.g. "/machine_a,/machine_b"
-  source_names: "" # e.g. "control_center"
-  explicitly_adressed_incoming: false
-  locally_used_source_name_incoming: false
+  topic_list_paths_inbound: ""
+  local_explicitly_targeted_inbound: false
+  app_keep_source_name_inbound: false
 
   out: false
-  topic_list_paths_outgoing: "" # e.g. "/machine_a,/machine_b"
-  target_names: "" # e.g. "shuttle_ella,shuttle_anna"
-  locally_used_source_name_outgoing: false
+  topic_list_paths_outbound: ""
+  app_has_source_name_outbound: false
+  remote_explicitly_targeted_name_outbound: ""
 
   # RMW specific OTA parameters
   zen: false # to use zenoh for OTA communication instaed of CycloneDDS
@@ -41,36 +35,116 @@ parameters:
 
   # Utility
   topic_monitor: false
+  tm_in_to_adressant: '""'
+  tm_out_to_adressant: '""'
+  tm_link_duration_buffer_s: 1.0
 
-  network_monitor: true
+  network_monitor: false
 
   heartbeat: false
-  heartbeat_topics:
-  heartbeat_delay_topic_1:
-  heartbeat_delay_topic_2:
+  heartbeat_out_topics:
+  heartbeat_out_hz: 10.0
+  heartbeat_in_topic:
+  heartbeat_in_hz_window_s: 1.0
+
+  rs: false
+  rs_restamp_topics: "" # e.g. "/costmap/costmap,/visualization/planning/pso/submitted_visualization,/visualization/maneuver/announcements_barriers,/visualization/planning/free/curvature_planning,/visualization/planning/free/result"
+  rs_topic_suffix: # e.g."/restamped"
+
+  fb: false
+  fb_global_frame_prefix: # e.g. "machine_a"
+  fb_global_topic_suffix: "" # e.g. "/globalframe"
+  fb_exclude_frames: "" # e.g. "map,cart"
+  fb_local_to_global_topics: "" # e.g. "/tf,/tf_static,/costmap"
+  fb_global_to_local_topics: "" # e.g. "/move_base_free/goal"
+
+  comp: false
+  comp_config_file:
+  comp_algorithm: # e.g. "bz2"
+
+  deco: false
+  deco_config_file:
+  deco_algorithm: # e.g. "bz2"
+
+  nor: false
+  nor_topic_1_prefix: # e.g. "/${vehicle_name}"
+  nor_topic_1_base: # e.g. "tf"
+  nor_topic_1_suffix: # e.g. "/restamped/globalframe"
+  nor_topic_2_prefix: # e.g. "/${vehicle_name}"
+  nor_topic_2_base: # e.g. "tf_static"
+  nor_topic_2_suffix: # e.g. "/restamped/globalframe"
+  nor_topic_3_prefix: # e.g. "/${vehicle_name}"
+  nor_topic_3_base: # e.g. "costmap"
+  nor_topic_3_suffix: # e.g. "/restamped/globalframe"
+  nor_topic_4_prefix: # e.g. "/${vehicle_name}"
+  nor_topic_4_base: # e.g. "visualization/planning/pso/submitted_visualization"
+  nor_topic_4_suffix: # e.g. "/restamped/globalframe"
+
+  thr: false
+  thr_topic_1: # e.g. /sensors/camera/front_wide/image_color
+  thr_rate_1: # e.g. 20
+  thr_topic_2: # e.g. /sensors/front_camera/image_raw/compressed
+  thr_rate_2: # e.g. 20
+  thr_topic_3: # e.g. /sensors/front_camera/image_raw/compressed
+  thr_rate_3: # e.g. 20
+  thr_topic_4: # e.g. /sensor/front_camera/image_color/compressed
+  thr_rate_4: # e.g. 20
+
+  ipx: false
+  ipx_1_topics: # e.g. /sensors/camera/front_wide/image_color
+  ipx_1_preset: # e.g. wsvga
+  ipx_2_topics: # e.g. /sensors/front_camera/image_raw/compressed
+  ipx_2_preset: # e.g. wsvga
+  ipx_3_topics: # e.g. /sensors/front_camera/image_raw/compressed
+  ipx_3_preset: # e.g. wsvga
+  ipx_4_topics: # e.g. /sensor/front_camera/image_color/compressed
+  ipx_4_preset: # e.g. wsvga
+
+  it: false
+  it_1_topic: # e.g. /sensors/camera/front_wide/image_color
+  it_1_transport: # e.g. raw
+  it_1_compressed_jpeg_quality: # e.g. 70
+  it_1_ffmpeg_gop_size: # e.g. 10
+  it_1_ffmpeg_encoder_av_options: # e.g. "-preset medium -tune zerolatency"
+  it_1_ffmpeg_bit_rate: # e.g. "1000000"
+  it_1_outgoing_suffix: # e.g. compressed (defaults to it_1_transport if not set)
+  it_2_topic: # e.g. /sensors/front_camera/image_raw/compressed
+  it_2_transport: # e.g. raw
+  it_2_compressed_jpeg_quality: # e.g. 70
+  it_2_ffmpeg_gop_size: # e.g. 10
+  it_2_ffmpeg_encoder_av_options: # e.g. "-preset medium -tune zerolatency"
+  it_2_ffmpeg_bit_rate: # e.g. "1000000"
+  it_2_outgoing_suffix: # e.g. compressed (defaults to it_2_transport if not set)
+  it_3_topic: # e.g. /sensor/front_camera/image_color/compressed
+  it_3_transport: # e.g. raw
+  it_3_compressed_jpeg_quality: # e.g. 70
+  it_3_ffmpeg_gop_size: # e.g. 10
+  it_3_ffmpeg_encoder_av_options: # e.g. "-preset medium -tune zerolatency"
+  it_3_ffmpeg_bit_rate: # e.g. "1000000"
+  it_3_outgoing_suffix: # e.g. compressed (defaults to it_3_transport if not set)
+  it_4_topic: # e.g. /sensor/front_camera/image_color/compressed
+  it_4_transport: # e.g. raw
+  it_4_compressed_jpeg_quality: # e.g. 70
+  it_4_ffmpeg_gop_size: # e.g. 10
+  it_4_ffmpeg_encoder_av_options: # e.g. "-preset medium -tune zerolatency"
+  it_4_ffmpeg_bit_rate: # e.g. "1000000"
+  it_4_outgoing_suffix: # e.g. compressed (defaults to it_4_transport if not set)
+
+  irt: false
+  irt_1_topic: # e.g. /sensors/camera/front_wide/image_color
+  irt_1_transport: # e.g. raw
+  irt_2_topic: # e.g. /sensors/front_camera/image_raw/compressed
+  irt_2_transport: # e.g. raw
+  irt_3_topic: # e.g. /sensor/front_camera/image_color/compressed
+  irt_3_transport: # e.g. raw
+  irt_4_topic: # e.g. /sensor/front_camera/image_color/compressed
+  irt_4_transport: # e.g. raw
 
 common:
   before_commands:
     - if [ '${before_command}' != "None" ]; then ${before_command}; fi
 
 windows:
-  - name: REC
-    if: rec
-    layout: even-vertical
-    splits:
-      - commands:
-        - if [ "${rec_command_1}" == "None" ]; then exit; fi
-        - "${rec_command_1}"
-      - commands:
-        - if [ "${rec_command_2}" == "None" ]; then exit; fi
-        - "${rec_command_2}"
-      - commands:
-        - if [ "${rec_command_3}" == "None" ]; then exit; fi
-        - "${rec_command_3}"
-      - commands:
-        - if [ "${rec_command_4}" == "None" ]; then exit; fi
-        - "${rec_command_4}"
-    delay: 1
   - name: ZEN
     if: zen
     splits:
@@ -89,61 +163,220 @@ windows:
     splits:
       - commands:
         - case ${zen} in [Ff]alse) export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp;; esac
-        - case ${zen} in [Ff]alse) export CYCLONEDDS_URI=$(/ws/ota_configs/get_cyclonedds_xml.py -i "${host_ip}" -p "${peers}");; esac
-        - case ${zen} in [Ff]alse) export ROS_STATIC_PEERS=$(/ws/session/content/get_data_dict_entries.py -k "${peers}");; esac
+        - case ${zen} in [Ff]alse) export CYCLONEDDS_URI=$(/ws/ota_configs/get_cyclonedds_xml.py -i "${ip_local}" -p "${ip_remote}");; esac
+        - case ${zen} in [Ff]alse) export ROS_STATIC_PEERS=$(/ws/session/content/get_data_dict_entries.py -k "${ip_remote}");; esac
         - ros2 run com_py bridge_in --ros-args
-            -p base_topic_files:=[${topic_list_paths_incoming}]
-            -p host_name:=${host_name}
+            -p base_topic_files:=[${topic_list_paths_inbound}]
+            -p local_name:=${local_name}
             -p qos_config_file:='${qos_config_file}'
-            -p source_names:=[${source_names}]
-            -p explicitly_adressed:=${explicitly_adressed_incoming}
+            -p source_names:=[${remote_name}]
+            -p local_explicitly_targeted:=${local_explicitly_targeted_inbound}
       - commands:
         - ros2 run com_py relay_in --ros-args
-            -p base_topic_files:=[${topic_list_paths_incoming}]
-            -p host_name:=${host_name}
+            -p base_topic_files:=[${topic_list_paths_inbound}]
+            -p local_name:=${local_name}
             -p qos_config_file:='${qos_config_file}'
-            -p source_names:=[${source_names}]
-            -p explicitly_adressed:=${explicitly_adressed_incoming}
-            -p locally_used_source_name:=${locally_used_source_name_incoming}
+            -p source_names:=[${remote_name}]
+            -p local_explicitly_targeted:=${local_explicitly_targeted_inbound}
+            -p app_keep_source_name:=${app_keep_source_name_inbound}
   - name: OUT
     if: out
     splits:
       - commands:
         - case ${zen} in [Ff]alse) export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp;; esac
-        - case ${zen} in [Ff]alse) export CYCLONEDDS_URI=$(/ws/ota_configs/get_cyclonedds_xml.py -i "${host_ip}" -p "${peers}");; esac
-        - case ${zen} in [Ff]alse) export ROS_STATIC_PEERS=$(/ws/session/content/get_data_dict_entries.py -k "${peers}");; esac
+        - case ${zen} in [Ff]alse) export CYCLONEDDS_URI=$(/ws/ota_configs/get_cyclonedds_xml.py -i "${ip_local}" -p "${ip_remote}");; esac
+        - case ${zen} in [Ff]alse) export ROS_STATIC_PEERS=$(/ws/session/content/get_data_dict_entries.py -k "${ip_remote}");; esac
         - ros2 run com_py bridge_out --ros-args
-            -p base_topic_files:=[${topic_list_paths_outgoing}]
-            -p host_name:=${host_name}
+            -p base_topic_files:=[${topic_list_paths_outbound}]
+            -p local_name:=${local_name}
             -p qos_config_file:='${qos_config_file}'
-            -p target_names:=[${target_names}]
+            -p target_names:=[${remote_explicitly_targeted_name_outbound}]
       - commands:
         - ros2 run com_py relay_out --ros-args
-            -p base_topic_files:=[${topic_list_paths_outgoing}]
-            -p host_name:=${host_name}
+            -p base_topic_files:=[${topic_list_paths_outbound}]
+            -p local_name:=${local_name}
             -p qos_config_file:='${qos_config_file}'
-            -p target_names:=[${target_names}]
-            -p locally_used_source_name:=${locally_used_source_name_outgoing}
-  - name: TOP
+            -p target_names:=[${remote_explicitly_targeted_name_outbound}]
+            -p app_has_source_name:=${app_has_source_name_outbound}
+  - name: TM
     if: topic_monitor
     splits:
       - commands:
-        - ros2 run com_py topic_monitor
+        - ip_local_resolved=$(/ws/session/content/get_data_dict_entries.py -k "${ip_local}")
+        - interface=$(ip -o addr | awk '/'${ip_local_resolved//./\\.}'\/[0-9]+/ {print $2; exit}')
+        - ip_remote_resolved=$(/ws/session/content/get_data_dict_entries.py -k "${ip_remote}")
+        - ros2 run com_py topic_monitor --ros-args -p sourcename:=${remote_name} -p direction:=in -p to_adressant:='${tm_in_to_adressant}' -p ip_local:=${ip_local_resolved} -p ip_remote:=${ip_remote_resolved} -p interface:=${interface} -p link_duration_buffer_s:=${tm_link_duration_buffer_s}
+      - commands:
+        - ip_local_resolved=$(/ws/session/content/get_data_dict_entries.py -k "${ip_local}")
+        - interface=$(ip -o addr | awk '/'${ip_local_resolved//./\\.}'\/[0-9]+/ {print $2; exit}')
+        - ip_remote_resolved=$(/ws/session/content/get_data_dict_entries.py -k "${ip_remote}")
+        - ros2 run com_py topic_monitor --ros-args -p sourcename:=${local_name} -p direction:=out -p to_adressant:='${tm_out_to_adressant}' -p ip_local:=${ip_local_resolved} -p ip_remote:=${ip_remote_resolved} -p interface:=${interface} -p link_duration_buffer_s:=${tm_link_duration_buffer_s}
   - name: NET
     if: network_monitor
     splits:
       - commands:
-        - ip=$(/ws/session/content/get_data_dict_entries.py -k "${host_ip}")
-        - interface=$(ip -o addr | awk '/'${ip//./\\.}'\/[0-9]+/ {print $2; exit}')
-        - sudo iftop -i "$interface" -f "host $ip"
+        - ip_local_resolved=$(/ws/session/content/get_data_dict_entries.py -k "${ip_local}")
+        - interface=$(ip -o addr | awk '/'${ip_local_resolved//./\\.}'\/[0-9]+/ {print $2; exit}')
+        - ip_remote_resolved=$(/ws/session/content/get_data_dict_entries.py -k "${ip_remote}")
+        - sudo iftop -i "$interface" -f "host $ip_local_resolved and host $ip_remote_resolved"
   - name: BEAT
     if: heartbeat
+    layout: even-vertical
     splits:
       - commands:
-        - ros2 run com_py heartbeat --ros-args -p topic_names:=[${heartbeat_topics}]
+        - ros2 run com_py heartbeat_out_publisher --ros-args -p topic_names:=[${heartbeat_out_topics}] -p qos_config_file:='${qos_config_file}' -p hz:=${heartbeat_out_hz}
       - commands:
-        - if [ "${heartbeat_delay_topic_1}" == "None" ]; then exit; fi
-        - ros2 topic delay ${heartbeat_delay_topic_1}
+        - ros2 run com_py heartbeat_in_monitor --ros-args -p heartbeat_topic:=${heartbeat_in_topic} -p hz_window_s:=${heartbeat_in_hz_window_s} -p qos_config_file:='${qos_config_file}'
       - commands:
-        - if [ "${heartbeat_delay_topic_2}" == "None" ]; then exit; fi
-        - ros2 topic delay ${heartbeat_delay_topic_2}
+        - ros2 topic delay ${heartbeat_in_topic}
+      - commands:
+        - ros2 topic hz ${heartbeat_in_topic}
+  - name: RS
+    if: rs
+    splits:
+      - commands:
+        - ros2 run com_py restamp --ros-args
+            -p qos_config_file:='${qos_config_file}'
+            -p restamp_topics:=[${rs_restamp_topics}]
+            -p topic_suffix:=${rs_topic_suffix}
+  - name: FB
+    if: fb
+    splits:
+      - commands:
+        - ros2 run com_py local_global_frame_bridge --ros-args
+            -p qos_config_file:='${qos_config_file}'
+            -p global_frame_prefix:=${fb_global_frame_prefix}
+            -p global_topic_suffix:=${fb_global_topic_suffix}
+            -p exclude_frames:=[${fb_exclude_frames}]
+            -p local_to_global_topics:=[${fb_local_to_global_topics}]
+            -p global_to_local_topics:=[${fb_global_to_local_topics}]
+  - name: NOR
+    if: nor
+    layout: even-vertical
+    splits:
+      - commands:
+        - if [ '${nor_topic_1_base}' = "None" ]; then exit; fi
+        - ros2 run topic_tools relay ${nor_topic_1_prefix}/${nor_topic_1_base}${nor_topic_1_suffix} ${nor_topic_1_base}
+      - commands:
+        - if [ '${nor_topic_2_base}' = "None" ]; then exit; fi
+        - ros2 run topic_tools relay ${nor_topic_2_prefix}/${nor_topic_2_base}${nor_topic_2_suffix} ${nor_topic_2_base}
+      - commands:
+        - if [ '${nor_topic_3_base}' = "None" ]; then exit; fi
+        - ros2 run topic_tools relay ${nor_topic_3_prefix}/${nor_topic_3_base}${nor_topic_3_suffix} ${nor_topic_3_base}
+      - commands:
+        - if [ '${nor_topic_4_base}' = "None" ]; then exit; fi
+        - ros2 run topic_tools relay ${nor_topic_4_prefix}/${nor_topic_4_base}${nor_topic_4_suffix} ${nor_topic_4_base}
+  - name: COMP
+    if: comp
+    splits:
+      - commands:
+        - ros2 run com_py universal_compressor --ros-args -p config_file:=${comp_config_file} -p default_algorithm:=${comp_algorithm} -p qos_config_file:='${qos_config_file}'
+  - name: DECO
+    if: deco
+    splits:
+      - commands:
+        - ros2 run com_py universal_decompressor --ros-args -p config_file:=${deco_config_file} -p default_algorithm:=${deco_algorithm} -p qos_config_file:='${qos_config_file}'
+  - name: THR
+    if: thr
+    layout: even-vertical
+    splits:
+      - commands:
+        - if [ '${thr_topic_1}' = "None" ]; then exit; fi
+        - ros2 run topic_tools throttle messages ${thr_topic_1} ${thr_rate_1} ${thr_topic_1}/max${thr_rate_1}hz
+      - commands:
+        - if [ '${thr_topic_2}' = "None" ]; then exit; fi
+        - ros2 run topic_tools throttle messages ${thr_topic_2} ${thr_rate_2} ${thr_topic_2}/max${thr_rate_2}hz
+      - commands:
+        - if [ '${thr_topic_3}' = "None" ]; then exit; fi
+        - ros2 run topic_tools throttle messages ${thr_topic_3} ${thr_rate_3} ${thr_topic_3}/max${thr_rate_3}hz
+      - commands:
+        - if [ '${thr_topic_4}' = "None" ]; then exit; fi
+        - ros2 run topic_tools throttle messages ${thr_topic_4} ${thr_rate_4} ${thr_topic_4}/max${thr_rate_4}hz
+  - name: IPX
+    if: ipx
+    layout: even-vertical
+    splits:
+      - commands:
+        - if [ '${ipx_1_topics}' = "None" ]; then exit; fi
+        - ros2 run com_py image_pixel_capper --ros-args -p topics:=[${ipx_1_topics}] -p max_pixels_preset:=${ipx_1_preset} -p qos_config_file:='${qos_config_file}'
+      - commands:
+        - if [ '${ipx_2_topics}' = "None" ]; then exit; fi
+        - ros2 run com_py image_pixel_capper --ros-args -p topics:=[${ipx_2_topics}] -p max_pixels_preset:=${ipx_2_preset} -p qos_config_file:='${qos_config_file}'
+      - commands:
+        - if [ '${ipx_3_topics}' = "None" ]; then exit; fi
+        - ros2 run com_py image_pixel_capper --ros-args -p topics:=[${ipx_3_topics}] -p max_pixels_preset:=${ipx_3_preset} -p qos_config_file:='${qos_config_file}'
+      - commands:
+        - if [ '${ipx_4_topics}' = "None" ]; then exit; fi
+        - ros2 run com_py image_pixel_capper --ros-args -p topics:=[${ipx_4_topics}] -p max_pixels_preset:=${ipx_4_preset} -p qos_config_file:='${qos_config_file}'
+  - name: IT
+    if: it
+    layout: even-vertical
+    splits:
+      - commands:
+        - if [ '${it_1_topic}' = "None" ]; then exit; fi
+        - args=(ros2 run image_transport republish --ros-args -r __node:=republish1 -p in_transport:=raw)
+        - '[[ "${it_1_transport}" != "None" ]] && args+=(-p "out_transport:=${it_1_transport}")'
+        - '[[ "${it_1_compressed_jpeg_quality}" != "None" ]] && args+=(-p "ut.compressed.jpeg_quality:=${it_1_compressed_jpeg_quality}")'
+        - '[[ "${it_1_ffmpeg_gop_size}" != "None" ]] && args+=(-p "ut.ffmpeg.gop_size:=${it_1_ffmpeg_gop_size}")'
+        - '[[ "${it_1_ffmpeg_encoder_av_options}" != "None" ]] && args+=(-p "ut.ffmpeg.encoder_av_options:=${it_1_ffmpeg_encoder_av_options}")'
+        - '[[ "${it_1_ffmpeg_bit_rate}" != "None" ]] && args+=(-p "ut.ffmpeg.bit_rate:=${it_1_ffmpeg_bit_rate}")'
+        - if [[ "${it_1_outgoing_suffix}" != "None" ]]; then outgoing_suffix="${it_1_outgoing_suffix}"; else outgoing_suffix="${it_1_transport}"; fi
+        - args+=(--remap "in:=${it_1_topic}" --remap "out/${it_1_transport}:=${it_1_topic}/${outgoing_suffix}")
+        - echo ${args[@]} 
+        - ${args[@]}
+      - commands:
+        - if [ '${it_2_topic}' = "None" ]; then exit; fi
+        - args=(ros2 run image_transport republish --ros-args -r __node:=republish2 -p in_transport:=raw)
+        - '[[ "${it_2_transport}" != "None" ]] && args+=(-p "out_transport:=${it_2_transport}")'
+        - '[[ "${it_2_compressed_jpeg_quality}" != "None" ]] && args+=(-p "ut.compressed.jpeg_quality:=${it_2_compressed_jpeg_quality}")'
+        - '[[ "${it_2_ffmpeg_gop_size}" != "None" ]] && args+=(-p "ut.ffmpeg.gop_size:=${it_2_ffmpeg_gop_size}")'
+        - '[[ "${it_2_ffmpeg_encoder_av_options}" != "None" ]] && args+=(-p "ut.ffmpeg.encoder_av_options:=${it_2_ffmpeg_encoder_av_options}")'
+        - '[[ "${it_2_ffmpeg_bit_rate}" != "None" ]] && args+=(-p "ut.ffmpeg.bit_rate:=${it_2_ffmpeg_bit_rate}")'
+        - if [[ "${it_2_outgoing_suffix}" != "None" ]]; then outgoing_suffix="${it_2_outgoing_suffix}"; else outgoing_suffix="${it_2_transport}"; fi
+        - args+=(--remap "in:=${it_2_topic}" --remap "out/${it_2_transport}:=${it_2_topic}/${outgoing_suffix}")
+        - echo ${args[@]} 
+        - ${args[@]}
+      - commands:
+        - if [ '${it_3_topic}' = "None" ]; then exit; fi
+        - args=(ros2 run image_transport republish --ros-args -r __node:=republish3 -p in_transport:=raw)
+        - '[[ "${it_3_transport}" != "None" ]] && args+=(-p "out_transport:=${it_3_transport}")'
+        - '[[ "${it_3_compressed_jpeg_quality}" != "None" ]] && args+=(-p "ut.compressed.jpeg_quality:=${it_3_compressed_jpeg_quality}")'
+        - '[[ "${it_3_ffmpeg_gop_size}" != "None" ]] && args+=(-p "ut.ffmpeg.gop_size:=${it_3_ffmpeg_gop_size}")'
+        - '[[ "${it_3_ffmpeg_encoder_av_options}" != "None" ]] && args+=(-p "ut.ffmpeg.encoder_av_options:=${it_3_ffmpeg_encoder_av_options}")'
+        - '[[ "${it_3_ffmpeg_bit_rate}" != "None" ]] && args+=(-p "ut.ffmpeg.bit_rate:=${it_3_ffmpeg_bit_rate}")'
+        - if [[ "${it_3_outgoing_suffix}" != "None" ]]; then outgoing_suffix="${it_3_outgoing_suffix}"; else outgoing_suffix="${it_3_transport}"; fi
+        - args+=(--remap "in:=${it_3_topic}" --remap "out/${it_3_transport}:=${it_3_topic}/${outgoing_suffix}")
+        - echo ${args[@]} 
+        - ${args[@]}
+      - commands:
+        - if [ '${it_4_topic}' = "None" ]; then exit; fi
+        - args=(ros2 run image_transport republish --ros-args -r __node:=republish4 -p in_transport:=raw)
+        - '[[ "${it_4_transport}" != "None" ]] && args+=(-p "out_transport:=${it_4_transport}")'
+        - '[[ "${it_4_compressed_jpeg_quality}" != "None" ]] && args+=(-p "ut.compressed.jpeg_quality:=${it_4_compressed_jpeg_quality}")'
+        - '[[ "${it_4_ffmpeg_gop_size}" != "None" ]] && args+=(-p "ut.ffmpeg.gop_size:=${it_4_ffmpeg_gop_size}")'
+        - '[[ "${it_4_ffmpeg_encoder_av_options}" != "None" ]] && args+=(-p "ut.ffmpeg.encoder_av_options:=${it_4_ffmpeg_encoder_av_options}")'
+        - '[[ "${it_4_ffmpeg_bit_rate}" != "None" ]] && args+=(-p "ut.ffmpeg.bit_rate:=${it_4_ffmpeg_bit_rate}")'
+        - if [[ "${it_4_outgoing_suffix}" != "None" ]]; then outgoing_suffix="${it_4_outgoing_suffix}"; else outgoing_suffix="${it_4_transport}"; fi
+        - args+=(--remap "in:=${it_4_topic}" --remap "out/${it_4_transport}:=${it_4_topic}/${outgoing_suffix}")
+        - echo ${args[@]} 
+        - ${args[@]}
+  - name: IRT
+    if: irt
+    layout: even-vertical
+    splits:
+      - commands:
+        - if [ '${irt_1_topic}' = "None" ]; then exit; fi
+        - ros2 run image_transport republish --ros-args -p in_transport:=${irt_1_transport} -p out_transport:=raw
+            --remap in/ffmpeg:=${irt_1_topic} --remap out:=${irt_1_topic}/raw
+      - commands:
+        - if [ '${irt_2_topic}' = "None" ]; then exit; fi
+        - ros2 run image_transport republish --ros-args -p in_transport:=${irt_2_transport} -p out_transport:=raw
+            --remap in/${irt_2_transport}:=${irt_2_topic} --remap out:=${irt_2_topic}/raw
+      - commands:
+        - if [ '${irt_3_topic}' = "None" ]; then exit; fi
+        - ros2 run image_transport republish --ros-args -p in_transport:=${irt_3_transport} -p out_transport:=raw
+            --remap in/${irt_3_transport}:=${irt_3_topic} --remap out:=${irt_3_topic}/raw
+      - commands:
+        - if [ '${irt_4_topic}' = "None" ]; then exit; fi
+        - ros2 run image_transport republish --ros-args -p in_transport:=${irt_4_transport} -p out_transport:=raw
+            --remap in/${irt_4_transport}:=${irt_4_topic} --remap out:=${irt_4_topic}/raw

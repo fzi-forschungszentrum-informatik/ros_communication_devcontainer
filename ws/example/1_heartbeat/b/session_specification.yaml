@@ -1,0 +1,3 @@
+session_plugins:
+  - ./plugin.yaml
+  - /ws/session/content/base/session_plugin_base.yaml

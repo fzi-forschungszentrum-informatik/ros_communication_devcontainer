@@ -1,3 +1,0 @@
-session_plugins:
-  - /ws/example/4_external_container/machine_b/plugin.yaml
-  - /ws/session/content/base/session_plugin_base.yaml

@@ -1,8 +1,0 @@
-default:
-  depth: 1
-
-role_defaults:
-  ota_sub:
-    reliability: best_effort
-  ota_pub:
-    reliability: best_effort

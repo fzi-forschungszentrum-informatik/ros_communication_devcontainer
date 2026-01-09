@@ -1,0 +1,13 @@
+{
+  "container_name": "machine_b_logic",
+
+  "run_type": "command",
+  "command": "ros2 bag play --loop /costmap_1second",
+
+  "run_args": [ 
+    "--network", "host", 
+    "-v", "./costmap_1second:/costmap_1second",
+    "-v", ".:/ws",
+    "-e", "ROS_DOMAIN_ID=47"
+  ]
+}

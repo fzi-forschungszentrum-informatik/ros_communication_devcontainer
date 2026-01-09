@@ -1,3 +1,0 @@
-session_plugins:
-  - /ws/example/2_multi_machine_direct/common_plugin.yaml
-  - /ws/example/2_multi_machine_direct/machine_b/plugin.yaml

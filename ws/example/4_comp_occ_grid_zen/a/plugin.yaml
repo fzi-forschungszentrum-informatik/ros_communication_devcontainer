@@ -1,0 +1,32 @@
+parameters:
+  session_dir: /ws/example/4_comp_occ_grid_zen
+  peer_dir: ${session_dir}/a
+
+  ip_local: machine_a_ip
+  local_name: a
+  ip_remote: machine_b_ip
+  remote_name: b
+
+  in: true
+  topic_list_paths_inbound: ${session_dir}/b_to_a_topics.txt
+
+  out: true
+  topic_list_paths_outbound: ${session_dir}/a_to_b_topics.txt
+
+  zen: true
+  zen_pub_allow: /ota/a/.*
+  zen_sub_allow: /ota/b/.*
+  zen_transport: udp
+  zen_mode: router
+  zen_endpoint_role: listen
+  zen_main_ip: machine_a_ip
+  zen_main_port: 7447
+  topic_monitor: true
+
+  heartbeat: true
+  heartbeat_out_topics: /heartbeat_a
+  heartbeat_in_topic: /heartbeat_b
+
+  deco: true
+  deco_config_file: ${peer_dir}/decompression.yaml
+  deco_algorithm: bz2

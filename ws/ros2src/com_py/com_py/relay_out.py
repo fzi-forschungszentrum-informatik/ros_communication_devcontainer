@@ -54,13 +54,17 @@ class OtaRelayOut(BaseBridgeRelay):
             pub_role='forward_pub'
         )
 
+    def declare_additional_parameters(self):
+        # Semantics: if true, local side uses /{source_name}/ prefix.
+        self.app_has_source_name = bool(self.declare_parameter('app_has_source_name', False).value)
+
     def resolve_topic_triplets(self):
         return resolve_topics(
             self.node_role,
             self.base_topic_files,
             [self.host_name],
             self.target_names,
-            self.locally_used_source_name
+            locally_used_source_name=self.app_has_source_name
         )
 
 def main(args=None):

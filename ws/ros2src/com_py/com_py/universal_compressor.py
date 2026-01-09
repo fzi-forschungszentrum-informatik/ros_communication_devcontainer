@@ -40,8 +40,9 @@
 import rclpy
 from rclpy.node import Node
 from rclpy.serialization import serialize_message
-from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 from rosidl_runtime_py.utilities import get_message
+
+from com_py.qos import load_qos_config, get_topic_qos
 
 import yaml
 import re
@@ -92,7 +93,7 @@ class UniversalCompressorNode(Node):
     The YAML has a 'compression:' list of dictionaries, each specifying:
       - topic_regex
       - algorithm (optional, default="bz2")
-      - add_suffix (optional, default="_compressed")
+      - add_suffix (optional, default="/{algorithm}")
     """
 
     def __init__(self):
@@ -102,20 +103,25 @@ class UniversalCompressorNode(Node):
         self.declare_parameter('config_file', 'compression_config.yaml')
         config_file = self.get_parameter('config_file').value
 
+        # Default compression algorithm (used when a YAML rule does not specify one)
+        self.declare_parameter('default_algorithm', 'bz2')
+        self.default_algorithm = self.get_parameter('default_algorithm').value
+
         self.get_logger().info(f"[universal_compressor] Starting with config_file='{config_file}'")
+        self.get_logger().info(f"[universal_compressor] default_algorithm='{self.default_algorithm}'")
 
         # 2) Lock to protect subscription checks
         self.subscribe_lock = Lock()
 
         # 3) Simple set to track topics we've already subscribed to
         self.subscribed_topics = set()
-
-        # 4) QoS: choose what you prefer. This example uses best-effort as a default.
-        self.qos_profile = QoSProfile(
-            reliability=ReliabilityPolicy.RELIABLE,
-            history=HistoryPolicy.KEEP_LAST,
-            depth=10
-        )
+        # Keep subscription objects alive
+        self._subscriptions = []
+        # 4) QoS config + roles (configured via qos.py YAML)
+        self.qos_config_file = self.declare_parameter('qos_config_file', '').value
+        self.sub_role = 'compressor_sub'
+        self.pub_role = 'compressor_pub'
+        self.qos_config = load_qos_config(self.get_logger(), self.qos_config_file)
 
         # 5) Load YAML config
         self.config = self.load_config(config_file)
@@ -161,9 +167,9 @@ class UniversalCompressorNode(Node):
             # 3) For each rule in config['compression'], check regex
             for item in self.config['compression']:
                 topic_pattern = item.get('topic_regex', '')
-                # Default to 'bz2' if no algorithm provided:
-                algorithm = item.get('algorithm', 'bz2')
-                add_suffix = item.get('add_suffix', '_compressed')
+                # Default to node parameter if no algorithm provided:
+                algorithm = item.get('algorithm', self.default_algorithm)
+                add_suffix = item.get('add_suffix', f'/{algorithm}')
 
                 # Pre-compile the regex for efficiency if you like:
                 rx = re.compile(topic_pattern)
@@ -179,26 +185,34 @@ class UniversalCompressorNode(Node):
                                 # If we can't load or parse the type, skip
                                 continue
 
+                            # QoS from roles (per-topic overrides supported via qos.yaml)
+                            sub_qos = get_topic_qos(self.get_logger(), self.qos_config, tname, self.sub_role)
+                            pub_qos = get_topic_qos(self.get_logger(), self.qos_config, tname, self.pub_role)
+
                             # Create publisher with CompressedData
                             pub = self.create_publisher(
                                 CompressedData,
                                 out_topic,
-                                qos_profile=self.qos_profile
+                                qos_profile=pub_qos
                             )
 
                             # Create subscription to the original message
                             # We'll pass a small lambda capturing the arguments
                             # so we know which publisher and algorithm to use.
                             # We'll also pass the 'tname' so we can log which topic we got.
-                            self.create_subscription(
+                            sub = self.create_subscription(
                                 msg_class,
                                 tname,
                                 lambda msg,
                                        publisher=pub,
                                        algo=algorithm,
-                                       source_topic=tname: self.compression_callback(msg, publisher, algo, source_topic),
-                                qos_profile=self.qos_profile
+                                       source_topic=tname,
+                                       msg_type_str=type_name: self.compression_callback(
+                                           msg, publisher, algo, source_topic, msg_type_str
+                                       ),
+                                qos_profile=sub_qos
                             )
+                            self._subscriptions.append(sub)
 
                             self.subscribed_topics.add(out_topic)
                             self.get_logger().info(
@@ -218,7 +232,7 @@ class UniversalCompressorNode(Node):
             self.get_logger().error(f"Could not load message class '{ros1_style_path}': {e}")
             return None
 
-    def compression_callback(self, msg, publisher, algorithm, original_topic):
+    def compression_callback(self, msg, publisher, algorithm, original_topic, msg_type_str: str):
         """
         Callback that:
           1) Serializes the incoming message
@@ -237,9 +251,10 @@ class UniversalCompressorNode(Node):
 
             compressed_size = len(compressed_bytes)
 
-            # 3) Publish as custom CompressedData
+            # 3) Publish as custom CompressedData (include original type so decompressor can be type-agnostic)
             out_msg = CompressedData()
             out_msg.header.stamp = self.get_clock().now().to_msg()
+            out_msg.msg_type = msg_type_str
             # Convert Python bytes -> list of uint8
             out_msg.data = list(compressed_bytes)
 
@@ -253,7 +268,7 @@ class UniversalCompressorNode(Node):
             self.get_logger().info(
                 f"[{original_topic}] original={format_size(original_size)}, "
                 f"compressed={format_size(compressed_size)}, ratio={ratio:.2f}, "
-                f"time={elapsed_ms:.1f} ms (algo={algorithm})"
+                f"time={elapsed_ms:.1f} ms (algo={algorithm}, type='{msg_type_str}')"
             )
 
         except Exception as e:

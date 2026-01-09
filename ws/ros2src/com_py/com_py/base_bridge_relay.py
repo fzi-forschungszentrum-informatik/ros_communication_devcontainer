@@ -42,8 +42,9 @@ from rclpy.node import Node
 from com_py.topic_resolution import resolve_topics
 from com_py.qos import load_qos_config
 from com_py.pub_sub_pair import PubSubPair
+from com_py.pair_management import PairRefreshMixin
 
-class BaseBridgeRelay(Node):
+class BaseBridgeRelay(Node, PairRefreshMixin):
     """Base class for bridge and relay nodes with common functionality."""
 
     def __init__(self, node_name: str, node_role: str, sub_role: str, pub_role: str):
@@ -56,20 +57,21 @@ class BaseBridgeRelay(Node):
 
         # Common parameters
         self.base_topic_files = self.declare_parameter('base_topic_files', rclpy.Parameter.Type.STRING_ARRAY).value
-        self.host_name = self.declare_parameter('host_name', '').value
+        self.host_name = self.declare_parameter('local_name', '').value
         self.qos_config_file = self.declare_parameter('qos_config_file', '').value
 
         # Optional parameters with defaults
         self.source_names = self.declare_parameter('source_names', rclpy.Parameter.Type.STRING_ARRAY).value or []
         self.target_names = self.declare_parameter('target_names', rclpy.Parameter.Type.STRING_ARRAY).value or []
-        self.explicitly_adressed = bool(self.declare_parameter('explicitly_adressed', False).value)
-        self.locally_used_source_name = bool(self.declare_parameter('locally_used_source_name', False).value)
+
+        # Derived classes can declare additional parameters here (must happen before initialize_node()).
+        self.declare_additional_parameters()
 
         # Initialize node
         self.initialize_node()
         
         # Create timer for periodic refresh of invalid pairs
-        self.create_timer(5.0, self.refresh_pairs)
+        self.init_pair_refresh(period_s=5.0, log_prefix=self.node_role)
 
     def initialize_node(self):
         """Initialize node with resolved topics and QoS configuration."""
@@ -99,8 +101,7 @@ class BaseBridgeRelay(Node):
         """Override in derived classes to implement specific topic resolution logic."""
         raise NotImplementedError
 
-    def refresh_pairs(self):
-        """Attempt to initialize any invalid pairs."""
-        for pair in self.pairs:
-            if not pair.is_valid:
-                pair.try_initialize() 
+    def declare_additional_parameters(self):
+        """Hook for derived classes to declare extra parameters before topic resolution."""
+        return
+

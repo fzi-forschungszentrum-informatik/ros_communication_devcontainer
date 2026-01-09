@@ -1,2 +1,0 @@
-/costmap/costmap_compressed
-/bbeat

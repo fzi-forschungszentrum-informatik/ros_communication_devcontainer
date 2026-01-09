@@ -1,0 +1,11 @@
+parameters:
+  session_dir: /ws/example/2_native_topic
+  peer_dir: ${session_dir}/a
+
+  ip_local: machine_a_ip
+  local_name: a
+  ip_remote: machine_b_ip
+  remote_name: b
+
+  in: true
+  topic_list_paths_inbound: ${session_dir}/b_to_a_topics.txt

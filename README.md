@@ -1,6 +1,6 @@
 # ROS Communication DevContainer
 
-The ROS Communication DevContainer is a Docker-based solution designed to streamline the synchronization of ROS2 topics across Linux machines. It provides built-in compression and routing capabilities for over-the-air (OTA) data transfer: selected topics are remapped into an OTA namespace and transmitted either via direct DDS (CycloneDDS) or through a Zenoh router. This project aligns with the publication *“Scalable Remote Operation for Autonomous Vehicles: Integration of Cooperative Perception and Open Source Communication.”*
+The ROS Communication DevContainer is a Docker-based solution designed to streamline the bidirectional synchronization of ROS2 topics between two Linux machines. It provides built-in compression and routing capabilities for over-the-air (OTA) data transfer: selected topics are remapped into an OTA namespace and transmitted either via direct DDS (CycloneDDS) or through a Zenoh router. This project aligns with the publication *“Scalable Remote Operation for Autonomous Vehicles: Integration of Cooperative Perception and Open Source Communication.”*
 
 <details>
 <summary>Key Features</summary>
@@ -21,24 +21,50 @@ The ROS Communication DevContainer is a Docker-based solution designed to stream
 - Git for configuration management
 - Machines connected to the same network (VPN or local WLAN)
 
+### Convenience CLI: `rosotacom`
+
+This repository's main entrypoint for starting ROS communication sessions is
+`run_session_in_container.py`.
+For convenience, you can expose it as a short command (e.g. `rosotacom`) via a symlink into `~/.local/bin`.
+
+#### Install
+
+```bash
+cd /path/to/ros_communication_devcontainer && ./install_rosotacom.sh
+```
+
+Make sure `~/.local/bin` is in your `PATH` (often already true on Ubuntu).
+
 ### Basic Setup
 
 1. Fork this repository
+
 2. Configure your environment:
    - `data_dict.json`: Maps semantic names to resources (example in `data_dict.json.examples`)
    - `local.json`: Container-specific settings (example in `local.json.examples`)
 
-### Configuration Files
+3. Write the session configuration (user-facing) that defines the OTA communication behavior:
+   - both peers
+   - topic directions (`<src>_to_<dst>`)
+   - optional QoS, processing (restamp, compression, transports, …), Zenoh routing, …
+   - Reference: `session-configuratoin.md`
+   - Terminology / naming conventions (peer, application/com/OTA topics, inbound/outbound, …): `terminology.md`
 
-Two main configuration types:
+4. Put the config into a **session directory** (this directory is the input and also the output location for generated files):
+   - `session-definition.yaml` (self-contained), OR
+   - `session-parametrization.yaml` (template + parameters; generator also writes a resolved `session-definition.yaml`)
 
-1. **Session Configuration**:
-   - `session_specification.yaml`: Defines communication session structure
-   - `[plugin_name].yaml`: Individual plugin configurations
+5. Run `rosotacom` on **each peer** with the same session directory, but with its local peer key (`--identity`):
 
-2. **Compression Configuration** (Optional):
-   - Configure compression settings for specific topics
-   - Support for multiple compression algorithms
+```bash
+# on peer "a"
+rosotacom --session-dir /path/to/session_dir --identity a
+
+# on peer "b"
+rosotacom --session-dir /path/to/session_dir --identity b
+```
+
+That’s it: `rosotacom` will read the session config input file and automatically create/update all required generated files in that directory (per-peer plugin/session specs, direction topic lists, optional compression/decompression, optional `qos.yaml`, …).
 
 ## Usage Examples
 
@@ -54,97 +80,107 @@ The examples require two machines, which we will refer to as `machine_a` and `ma
 </details>
 
 <details>
-<summary>Example 1: Hello World</summary>
+<summary>Example 1: Heartbeat</summary>
 
-This example checks if the ROS Communication DevContainer can be started successfully.
+This example starts a minimal session that only exchanges heartbeat messages between two peers.
 
-- On any machine, run the script:
+- On `machine_a`, run:
   ```bash
-  ./example/1_hello_world_session/run.sh
+  ./example/1_heartbeat/run_machine_a.sh
   ```
-- Confirm that a hello world statement gets printed.
+- On `machine_b`, run:
+  ```bash
+  ./example/1_heartbeat/run_machine_b.sh
+  ```
+- Confirm the heartbeat topics are arriving at each peer.
 
 </details>
 
 <details>
-<summary>Example 2: Multi-Machine Direct Communication</summary>
+<summary>Example 2: Native Chatter Topic (external containers)</summary>
 
-This example demonstrates ROS2 communication between distinct machines using direct communication.
+This example bridges a native ROS 2 topic (`/chatter`) from `machine_b` to `machine_a`.
+The ROS “application logic” runs in separate containers (to emulate an existing, unchanged ROS setup),
+while the communication session runs via `rosotacom`.
 
-- On `machine_a`, execute:
+- On `machine_a`, start the “logic” container and the communication session in separate terminals:
   ```bash
-  ./example/2_multi_machine_direct/run_machine_a.sh
+  cd example/2_native_chatter/machine_a
+  ./run_external.py
   ```
-- On `machine_b`, execute:
   ```bash
-  ./example/2_multi_machine_direct/run_machine_b.sh
+  cd example/2_native_chatter/machine_a
+  ./run_communication.sh
   ```
-- Confirm that the listener on `machine_a` acknowledges the messages from the talker on `machine_b`.
+- On `machine_b`, start the “logic” container and the communication session in separate terminals:
+  ```bash
+  cd example/2_native_chatter/machine_b
+  ./run_external.py
+  ```
+  ```bash
+  cd example/2_native_chatter/machine_b
+  ./run_communication.sh
+  ```
+- Confirm that `machine_a` receives and echoes messages from `machine_b` on `/chatter`.
 
 </details>
 
 <details>
-<summary>Example 3: Multi-Machine Relay Communication</summary>
+<summary>Example 3: Compressed Occupancy Grid (CycloneDDS)</summary>
 
-This example demonstrates ROS2 communication between distinct machines using relay nodes.
+This example transfers a larger topic (an occupancy grid on `/costmap/costmap`) from `machine_b` to `machine_a`,
+including processing steps like restamping and compression/decompression.
 
-- On `machine_a`, execute:
+- On `machine_a`, start the “logic” container and the communication session in separate terminals:
   ```bash
-  ./example/3_multi_machine_relay/run_machine_a.sh
+  cd example/3_comp_occ_grid/machine_a
+  ./run_external.py
   ```
-- On `machine_b`, execute:
   ```bash
-  ./example/3_multi_machine_relay/run_machine_b.sh
+  cd example/3_comp_occ_grid/machine_a
+  ./run_communication.sh
   ```
-- Confirm that the listener on `machine_a` acknowledges the messages from the talker on `machine_b`.
+- On `machine_b`, start the bag playback (“logic”) and the communication session in separate terminals:
+  ```bash
+  cd example/3_comp_occ_grid/machine_b
+  ./run_external.py
+  ```
+  ```bash
+  cd example/3_comp_occ_grid/machine_b
+  ./run_communication.sh
+  ```
+- Confirm that `machine_a` receives the data stream and that the processed topics are visible (e.g. the restamped output).
 
 </details>
 
 <details>
-<summary>Example 4: External Container</summary>
+<summary>Example 4: Compressed Occupancy Grid (Zenoh)</summary>
 
-This example adds a layer of separation between the main logic and communication, allowing existing local ROS1 code to remain unchanged.
+This is the same scenario as Example 3, but routed via a Zenoh router layer (useful when peers cannot share a single DDS domain).
+The session config enables Zenoh with peer `a` as the main/router node.
 
-- On `machine_a`, navigate to `example/4_external_container/machine_a` and execute the following commands in separate terminals:
-  - `./run_external.py`
-  - `./run_communication.sh`
-- On `machine_b`, navigate to `example/4_external_container/machine_b` and execute the following commands in separate terminals:
-  - `./run_external.py`
-  - `./run_communication.sh`
-- Confirm that the master on `machine_a` acknowledges the messages from the master on `machine_b`.
-
-</details>
-
-<details>
-<summary>Example 5: Showcase</summary>
-
-This example demonstrates handling more complex data, such as an occupancy grid map, which is larger and therefore uses compression.
-
-- On `machine_a`, navigate to `example/5_showcase/machine_a` and execute the following commands in separate terminals:
-  - `./run_external.py`
-  - `./run_communication.sh`
-- On `machine_b`, navigate to `example/5_showcase/machine_b` and execute the following commands in separate terminals:
-  - `./run_external.py`
-  - `./run_communication.sh`
-- Confirm that the master on `machine_a` acknowledges the compressed messages from the master on `machine_b`.
-
-The showcase example includes:
-- Automatic topic compression and decompression
-- QoS configuration for optimized communication
-- Heartbeat monitoring between machines
+- On `machine_a`, start the “logic” container and the communication session in separate terminals:
+  ```bash
+  cd example/4_comp_occ_grid_zen/machine_a
+  ./run_external.py
+  ```
+  ```bash
+  cd example/4_comp_occ_grid_zen/machine_a
+  ./run_communication.sh
+  ```
+- On `machine_b`, start the bag playback (“logic”) and the communication session in separate terminals:
+  ```bash
+  cd example/4_comp_occ_grid_zen/machine_b
+  ./run_external.py
+  ```
+  ```bash
+  cd example/4_comp_occ_grid_zen/machine_b
+  ./run_communication.sh
+  ```
+- Confirm that `machine_a` receives the data stream (now via Zenoh), including the heartbeat and occupancy grid topics.
 
 </details>
 
-## Compression Support
-
-The system includes universal compression capabilities for ROS topics:
-
-```yaml
-compression:
-  - topic_regex: ".*"
-    algorithm: "bz2"  # Optional
-    add_suffix: "_compressed"  # Optional
-```
 
 ## Choosing the Transport Layer: CycloneDDS or Zenoh
 
@@ -163,16 +199,16 @@ This repository fits into a broader set of ROS-based OTA communication approache
   The examples in this repository use CycloneDDS to illustrate this approach.
 
 - **ROS 2 over Router-like Backbones**  
-  Some RMW have their own DDS Routers such as https://github.com/eProsima/DDS-Router.
-  Example 5 has a flag for using Zenoh to act as a lightweight router layer.
+  Some RMW have their own DDS Routers such as [eProsima/DDS-Router](https://github.com/eProsima/DDS-Router).
+  Example 4 uses Zenoh to act as a lightweight router layer.
 
 - **MQTT-based Approaches**  
   Common in cloud/IoT scenarios. Example:  
-  <https://github.com/ika-rwth-aachen/mqtt_client>
+  [ika-rwth-aachen/mqtt_client](https://github.com/ika-rwth-aachen/mqtt_client)
 
 - **Custom TCP/UDP Teleoperation Stacks**  
   Some frameworks implement their manual tcp/udp transportion layers. Example:
-  <https://github.com/TUMFTM/teleoperated_driving>
+  [TUMFTM/teleoperated_driving](https://github.com/TUMFTM/teleoperated_driving)
 
 ## How to Cite
 

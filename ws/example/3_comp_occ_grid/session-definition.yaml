@@ -1,0 +1,25 @@
+peers:
+  a:
+    ip_key: "machine_a_ip"
+  b:
+    ip_key: "machine_b_ip"
+
+shared:
+  use_topic_monitor: true
+  use_heartbeat: true
+
+  qos:
+    defaults:
+      depth: 1
+    for_role:
+      ota_sub:
+        reliability: best_effort
+      ota_pub:
+        reliability: best_effort
+
+topics:
+  b_to_a:
+    - topic: "/costmap/costmap"
+      processing:
+        restamp_if: true
+        compress: true

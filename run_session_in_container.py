@@ -51,9 +51,15 @@ from ros2docker.build_run import main as build_run
 # if unwanted_path in sys.path: 
 #     sys.path.remove(unwanted_path)
 
-def main(session_dir):
+def main(session_dir, identity=None, force=False, rewrite_formatting=False):
     script_path = f"/ws/session/creation/run_session.py"
     docker_command = f"{script_path} --session-dir {session_dir}"
+    if identity is not None:
+        docker_command += f" --identity {identity}"
+    if force:
+        docker_command += " --force"
+    if rewrite_formatting:
+        docker_command += " --rewrite-formatting"
 
     print(f"Command which will be run in container: {docker_command}")
     build_run(override={"run_type": "command", "command": docker_command})
@@ -62,6 +68,14 @@ def main(session_dir):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=main.__doc__)
-    parser.add_argument("-s", "--session-dir")
+    parser.add_argument(
+        "-s",
+        "--session-dir",
+        required=True,
+        help="Directory containing a session config input file (session-definition.yaml / session-parametrization.yaml) and where generated files will be written.",
+    )
+    parser.add_argument("--identity", required=True)
+    parser.add_argument("-f", "--force", action="store_true")
+    parser.add_argument("--rewrite-formatting", action="store_true")
     args = parser.parse_args()
     main(**{k: v for k, v in vars(args).items() if v is not None})

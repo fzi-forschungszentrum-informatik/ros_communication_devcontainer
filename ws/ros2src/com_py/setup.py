@@ -21,13 +21,15 @@ setup(
     entry_points={
         'console_scripts': [
             'image_bandwidth_reducer = com_py.image_bandwidth_reducer:main',
+            'image_pixel_capper = com_py.image_pixel_capper:main',
             'wifi_network_analysis_1 = com_py.wifi_network_analysis_1:main',
             'wifi_network_analysis_2 = com_py.wifi_network_analysis_2:main',
             'speedtest = com_py.speedtest:main',
             'traffic_monitor = com_py.traffic_monitor:main',
             'universal_compressor = com_py.universal_compressor:main',
             'universal_decompressor = com_py.universal_decompressor:main',
-            'heartbeat = com_py.heartbeat:main',
+            'heartbeat_out_publisher = com_py.heartbeat_out_publisher:main',
+            'heartbeat_in_monitor = com_py.heartbeat_in_monitor:main',
             'topic_monitor = com_py.topic_monitor:main',
             'bridge_in = com_py.bridge_in:main',
             'bridge_out = com_py.bridge_out:main',
@@ -40,6 +42,8 @@ setup(
             'lanelet_saver = com_py.lanelet_saver:main',
             'localization_map_split_reduce_saver = com_py.localization_map_split_reduce_saver:main',
             'tf_map_to_cart_saver = com_py.tf_map_to_cart_saver:main',
+            'local_global_frame_bridge = com_py.local_global_frame_bridge:main',
+            'restamp = com_py.restamp:main',
         ],
     },
 )

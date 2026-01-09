@@ -1,7 +1,0 @@
----
-windows:
-  - name: ECHO
-    layout: even-vertical
-    splits:
-      - commands:
-        - echo test

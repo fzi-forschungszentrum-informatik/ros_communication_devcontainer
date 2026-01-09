@@ -1,0 +1,8 @@
+peers:
+  a:
+    ip_key: "machine_a_ip"
+  b:
+    ip_key: "machine_b_ip"
+
+shared:
+  use_heartbeat: true

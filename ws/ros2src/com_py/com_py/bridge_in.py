@@ -56,8 +56,11 @@ class OtaBridgeIn(BaseBridgeRelay):
             pub_role='forward_pub'
         )
 
+    def declare_additional_parameters(self):
+        self.local_explicitly_targeted = bool(self.declare_parameter('local_explicitly_targeted', False).value)
+
     def resolve_topic_triplets(self):
-        target_names = [self.host_name] if self.explicitly_adressed else []
+        target_names = [self.host_name] if self.local_explicitly_targeted else []
         return resolve_topics(
             self.node_role,
             self.base_topic_files,

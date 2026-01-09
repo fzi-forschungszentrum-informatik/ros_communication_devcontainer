@@ -1,0 +1,2 @@
+decompression:
+  - topic_regex: "^/costmap/costmap/restamped/bz2$"

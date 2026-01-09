@@ -1,3 +1,0 @@
-session_plugins:
-  - /ws/example/3_multi_machine_relay/machine_b/plugin.yaml
-  - /ws/session/content/base/session_plugin_base.yaml

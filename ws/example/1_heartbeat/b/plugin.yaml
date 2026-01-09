@@ -1,0 +1,18 @@
+parameters:
+  session_dir: /ws/example/1_heartbeat
+  peer_dir: ${session_dir}/b
+
+  ip_local: machine_b_ip
+  local_name: b
+  ip_remote: machine_a_ip
+  remote_name: a
+
+  in: true
+  topic_list_paths_inbound: ${session_dir}/a_to_b_topics.txt
+
+  out: true
+  topic_list_paths_outbound: ${session_dir}/b_to_a_topics.txt
+
+  heartbeat: true
+  heartbeat_out_topics: /heartbeat_b
+  heartbeat_in_topic: /heartbeat_a

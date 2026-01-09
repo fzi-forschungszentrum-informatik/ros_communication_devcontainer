@@ -43,18 +43,23 @@ from rosidl_runtime_py.utilities import get_message
 from com_py.qos import get_topic_qos
 
 VALID_QOS_ROLES = {
-    "ota_sub", "ota_pub", 
+    "ota_sub", "ota_pub",
     "forward_sub", "forward_pub",
     "relay_sub", "relay_pub",
-    "local_sub", "local_pub"
-    # etc. define all you want
+    "local_sub", "local_pub",
+    "framebridge_sub", "framebridge_pub",
+    "restamp_sub", "restamp_pub",
+    "compressor_sub", "compressor_pub",
+    "decompressor_sub", "decompressor_pub",
+    "image_reduce_sub", "image_reduce_pub",
+    "heartbeat_sub", "heartbeat_pub",
 }
 
 class PubSubPair:
     """
     A single subscription->publication pair for a single base topic.
     sub_role, pub_role must be in VALID_QOS_ROLES or we error out.
-    No fallback if missing in the config => We'll still build a minimal QoS from the merged defaults or empty => standard ROS 2 defaults?
+    No fallback if missing in the config => We'll still build a minimal QoS from the merged defaults or empty => standard ROS 2 defaults.
     """
 
     def __init__(self, node: Node,
@@ -91,9 +96,9 @@ class PubSubPair:
 
         # Log summary after creation
         self.logger.info(f"[PubSubPair] Created: base_topic='{self.base_topic_name}', "
-                         f"sub_topic='{self.sub_topic}', pub_topic='{self.pub_topic}', "
-                         f"sub_role='{self.sub_role}', pub_role='{self.pub_role}', "
-                         f"is_valid={self.is_valid}")
+                         f"sub_topic='{self.sub_topic}', pub_topic='{self.pub_topic}'")
+                        #  f"sub_role='{self.sub_role}', pub_role='{self.pub_role}', "
+                        #  f"is_valid={self.is_valid}")
 
     def try_initialize(self) -> bool:
         """
@@ -123,8 +128,10 @@ class PubSubPair:
             self.sub_qos
         )
 
-        self.logger.info(f"[PubSubPair] Initialized: sub='{self.sub_topic}'(role={self.sub_role}), "
-                        f"pub='{self.pub_topic}'(role={self.pub_role}), type='{msg_type_str}'")
+        self.logger.info(f"[PubSubPair] Initialized: sub='{self.sub_topic}', "
+                        f"pub='{self.pub_topic}', type='{msg_type_str}'")
+        # self.logger.info(f"[PubSubPair] Initialized: sub='{self.sub_topic}'(role={self.sub_role}), "
+        #                 f"pub='{self.pub_topic}'(role={self.pub_role}), type='{msg_type_str}'")
         self.is_valid = True
         return True
 

@@ -23,7 +23,7 @@
   // Build-time arguments — defaults shown; override if necessary
   "build_args": {
     "BASE_IMAGE":                    "osrf/ros:kilted-desktop-full-noble",
-    "APT_PACKAGES":                  "iputils-ping psmisc net-tools snmp wireless-tools nload iftop iproute2",
+    "APT_PACKAGES":                  "iputils-ping psmisc net-tools snmp wireless-tools nload iftop iproute2 tshark",
     "PIP_PACKAGES":                  "numpy>=1.26,<2 lz4 pysnmp speedtest-cli psutil zstandard opencv-python"
   }
 }
