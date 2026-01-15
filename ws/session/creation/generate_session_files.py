@@ -779,26 +779,58 @@ def _render_regex_list(key: str, topics: List[str]) -> str:
 
 
 def _render_qos_yaml(shared_qos: Dict[str, Any], qos_overrides: Dict[str, Dict[str, Any]]) -> str:
+    """
+    Render QoS YAML in the schema consumed by `com_py/qos.py`:
+      default: <fields>
+      role_defaults: <role -> fields>
+      topics:
+        /topic:
+          <topic-wide fields>        # apply to ALL roles
+          roles:
+            <role>:
+              <fields>
+
+    Backwards compatible input for topic overrides:
+      - topic_cfg.for_role  (legacy template naming) is mapped to topic_cfg.roles.
+    """
+
     default = shared_qos.get("defaults", {}) or {}
     role_defaults = shared_qos.get("for_role", {}) or {}
 
-    out = ""
-    out += "default:\n"
-    for k, v in default.items():
-        out += _format_yaml_kv(2, k, v)
-    out += "\nrole_defaults:\n"
-    for role, vals in role_defaults.items():
-        out += f"  {role}:\n"
-        for k, v in vals.items():
-            out += _format_yaml_kv(4, k, v)
-
-    out += "\ntopics:\n"
-    for t, cfg in qos_overrides.items():
-        out += f"  {t}:\n"
+    # Normalize topic override shape:
+    # - Accept both {roles: {...}} and {for_role: {...}} (template-facing)
+    # - Keep any additional topic-level fields alongside roles.
+    topics_out: Dict[str, Any] = {}
+    for topic, cfg in (qos_overrides or {}).items():
+        if not isinstance(cfg, dict):
+            raise RuntimeError(f"qos override for topic '{topic}' must be a mapping, got {type(cfg)}")
+        cfg_out: Dict[str, Any] = {}
+        # copy all non-role keys
         for k, v in cfg.items():
-            out += _format_yaml_kv(4, k, v)
+            if k in ("for_role", "roles"):
+                continue
+            cfg_out[k] = v
 
-    return _ensure_trailing_newline(out)
+        roles = None
+        if "roles" in cfg and cfg.get("roles") is not None:
+            roles = cfg.get("roles")
+        elif "for_role" in cfg and cfg.get("for_role") is not None:
+            roles = cfg.get("for_role")
+
+        if roles is not None:
+            if not isinstance(roles, dict):
+                raise RuntimeError(f"qos override roles for topic '{topic}' must be a mapping, got {type(roles)}")
+            cfg_out["roles"] = roles
+
+        topics_out[topic] = cfg_out
+
+    qos_obj = {
+        "default": default,
+        "role_defaults": role_defaults,
+        "topics": topics_out,
+    }
+    # Use canonical YAML dump so nested dicts are valid YAML (not Python dict repr).
+    return _yaml_canonical_dump(qos_obj)
 
 
 def _compute_pipeline(
