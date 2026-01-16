@@ -41,7 +41,9 @@ import os
 import sys
 import argparse
 import re
+import json
 import yaml
+import subprocess
 import importlib.util
 
 project_dir = os.path.dirname(os.path.realpath(__file__))
@@ -60,6 +62,115 @@ spec.loader.exec_module(session_gen)
 # unwanted_path = "/home/carpc/robot_folders/src/robot_folders"
 # if unwanted_path in sys.path: 
 #     sys.path.remove(unwanted_path)
+
+_IPV4_RE = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
+
+
+def _remove_comments(json_like: str) -> str:
+    pattern = r"//.*?$|/\*.*?\*/"
+    return re.sub(pattern, "", json_like, flags=re.DOTALL | re.MULTILINE)
+
+
+def _load_data_dict(candidate_paths):
+    for path in candidate_paths:
+        if path and os.path.exists(path):
+            with open(path, "r") as f:
+                return json.loads(_remove_comments(f.read()))
+    return None
+
+
+def _resolve_data_dict_entry(data_dict, key):
+    if isinstance(key, list):
+        result = data_dict
+        for part in key:
+            if isinstance(result, dict) and part in result:
+                result = result[part]
+            else:
+                return part
+        return result
+    if isinstance(key, str):
+        return data_dict.get(key, key)
+    return key
+
+
+def _resolve_ip_key(ip_key: str, data_dict) -> list:
+    if not isinstance(ip_key, str):
+        return []
+    if data_dict is None:
+        return [ip_key]
+    if "+" in ip_key:
+        parts = [part.strip() for part in ip_key.split("+")]
+        keys = [part.split() for part in parts]
+    else:
+        keys = [ip_key.split()]
+    resolved = []
+    for key in keys:
+        if len(key) == 1:
+            resolved.append(_resolve_data_dict_entry(data_dict, key[0]))
+        else:
+            resolved.append(_resolve_data_dict_entry(data_dict, key))
+    return [str(r) for r in resolved if r is not None]
+
+
+def _extract_ipv4s(value: str) -> list:
+    if not isinstance(value, str):
+        return []
+    return _IPV4_RE.findall(value)
+
+
+def _get_local_ipv4s() -> list:
+    try:
+        out = subprocess.check_output(["ip", "-o", "-4", "addr", "show"], text=True)
+    except Exception:
+        return []
+    return _IPV4_RE.findall(out)
+
+
+def _auto_identity(session_dir: str) -> str:
+    cfg = _load_session_config(session_dir)
+    peers = (cfg or {}).get("peers")
+    if not isinstance(peers, dict):
+        raise RuntimeError("session-config must define a mapping 'peers: { <peer_key>: { ... } }'.")
+
+    peer_keys = list(peers.keys())
+    if not peer_keys:
+        raise RuntimeError("session-config must define at least one peer.")
+
+    repo_root = os.path.dirname(project_dir)
+    data_dict = _load_data_dict(
+        [
+            "/data_dict.json",
+            "/session/data_dict.json",
+            os.path.join(repo_root, "session", "data_dict.json"),
+        ]
+    )
+    local_ips = set(_get_local_ipv4s())
+    if not local_ips:
+        raise RuntimeError("Auto identity failed: could not determine local IPv4 addresses. Use --identity.")
+
+    matches = []
+    for peer_key in peer_keys:
+        ip_key = (peers.get(peer_key) or {}).get("ip_key")
+        if not ip_key:
+            continue
+        resolved = _resolve_ip_key(str(ip_key), data_dict)
+        peer_ips = set()
+        for value in resolved:
+            peer_ips.update(_extract_ipv4s(value))
+        if local_ips.intersection(peer_ips):
+            matches.append(peer_key)
+
+    if len(matches) == 1:
+        return matches[0]
+    if len(matches) == 0:
+        raise RuntimeError(
+            f"Auto identity failed: no peer ip_key matched local IPv4s={sorted(local_ips)}. "
+            "Use --identity."
+        )
+    raise RuntimeError(
+        f"Auto identity ambiguous: matched peers={matches} for local IPv4s={sorted(local_ips)}. "
+        "Use --identity."
+    )
 
 def _resolve_host_session_dir(session_dir: str) -> str:
     p = os.path.abspath(session_dir)
@@ -164,7 +275,16 @@ def _sanitize_container_name(name: str) -> str:
     return re.sub(r"[^a-zA-Z0-9_.-]", "_", name)
 
 
-def main(session_dir, identity=None, force=False, rewrite_formatting=False):
+def main(session_dir, identity=None, force=True, rewrite_formatting=False, auto_identity=True):
+    if not identity:
+        if auto_identity:
+            identity = _auto_identity(session_dir)
+            print(f"Auto-selected identity: {identity}")
+        else:
+            raise RuntimeError(
+                "Missing --identity. Provide --identity <name of the peer> or use --auto-identity."
+            )
+
     script_path = f"/ws/session/creation/run_session.py"
     docker_command = f"{script_path} --session-dir {session_dir}"
     if identity is not None:
@@ -195,8 +315,24 @@ if __name__ == "__main__":
         required=True,
         help="Directory containing a session config input file (session-definition.yaml / session-parametrization.yaml) and where generated files will be written.",
     )
-    parser.add_argument("--identity", required=True)
-    parser.add_argument("-f", "--force", action="store_true")
+    parser.add_argument(
+        "--identity",
+        required=False,
+        help="Which peer to launch (optional if --auto-identity is set).",
+    )
+    parser.add_argument(
+        "--no-auto-identity",
+        dest="auto_identity",
+        action="store_false",
+        help="Disable identity auto-detection.",
+    )
+    parser.add_argument(
+        "--no-force",
+        dest="force",
+        action="store_false",
+        help="Do not overwrite existing generated files.",
+    )
     parser.add_argument("--rewrite-formatting", action="store_true")
+    parser.set_defaults(force=True, auto_identity=True)
     args = parser.parse_args()
     main(**{k: v for k, v in vars(args).items() if v is not None})
