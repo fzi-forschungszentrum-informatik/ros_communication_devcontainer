@@ -16,6 +16,9 @@
     "--network", "host"
   ],
 
+  // Base directory for session configs. Relative values are resolved from config dir.
+  "session_configs_dir": "/session/configs",
+
   // Forward your local SSH agent into the container
   "forward_ssh_agent": true,
 

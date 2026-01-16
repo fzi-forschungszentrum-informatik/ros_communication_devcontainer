@@ -63,6 +63,13 @@ def _resolve_peer_dir(
       - session-parametrization.yaml (template + parameters)
       plus: --identity <peer_key>
     """
+    if not os.path.isabs(session_dir):
+        base = os.environ.get("SESSION_CONFIGS_DIR")
+        if base:
+            candidate = os.path.join(base, session_dir)
+            if os.path.isdir(candidate):
+                session_dir = candidate
+
     p = os.path.abspath(session_dir)
     if not os.path.isdir(p):
         raise RuntimeError(f"--session-dir must be a directory, got: {p}")

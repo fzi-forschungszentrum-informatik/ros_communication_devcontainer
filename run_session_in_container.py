@@ -45,6 +45,7 @@ import json
 import yaml
 import subprocess
 import importlib.util
+import difflib
 
 project_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(project_dir)
@@ -126,6 +127,52 @@ def _get_local_ipv4s() -> list:
     return _IPV4_RE.findall(out)
 
 
+def _resolve_session_configs_base() -> str:
+    local_config = get_local_config()
+    session_configs_dir = local_config.get("session_configs_dir")
+    if not session_configs_dir:
+        return None
+    config_dir = get_config_dir()
+    if os.path.isabs(session_configs_dir):
+        if os.path.isdir(session_configs_dir):
+            return session_configs_dir
+        run_args = local_config.get("run_args", [])
+        mapped = _map_container_path_to_host(session_configs_dir, run_args, config_dir)
+        return mapped if mapped else session_configs_dir
+    return os.path.abspath(os.path.join(config_dir, session_configs_dir))
+
+
+def _list_session_configs() -> list:
+    base = _resolve_session_configs_base()
+    if not base or not os.path.isdir(base):
+        return []
+    try:
+        entries = os.listdir(base)
+    except OSError:
+        return []
+    session_dirs = []
+    for name in sorted(entries):
+        p = os.path.join(base, name)
+        if os.path.isdir(p):
+            session_dirs.append(name)
+    return session_dirs
+
+
+def _format_available_sessions() -> str:
+    sessions = _list_session_configs()
+    if not sessions:
+        return "No session directories found in session_configs_dir."
+    joined = "\n  - ".join(sessions)
+    return f"Available sessions:\n  - {joined}"
+
+
+def _suggest_sessions(session_dir: str) -> list:
+    sessions = _list_session_configs()
+    if not sessions or not session_dir:
+        return []
+    return difflib.get_close_matches(session_dir, sessions, n=5, cutoff=0.6)
+
+
 def _auto_identity(session_dir: str) -> str:
     cfg = _load_session_config(session_dir)
     peers = (cfg or {}).get("peers")
@@ -181,13 +228,34 @@ def _resolve_host_session_dir(session_dir: str) -> str:
     run_args = local_config.get("run_args", [])
     config_dir = get_config_dir()
 
+    session_configs_dir = local_config.get("session_configs_dir")
+    if session_configs_dir and not os.path.isabs(session_dir):
+        base = (
+            session_configs_dir
+            if os.path.isabs(session_configs_dir)
+            else os.path.abspath(os.path.join(config_dir, session_configs_dir))
+        )
+        candidate = os.path.join(base, session_dir)
+        if os.path.isdir(candidate):
+            return candidate
+        resolved = _map_container_path_to_host(candidate, run_args, config_dir)
+        if resolved and os.path.isdir(resolved):
+            return resolved
+
     resolved = _map_container_path_to_host(p, run_args, config_dir)
     if resolved and os.path.isdir(resolved):
         return resolved
 
+    hints = []
+    suggestions = _suggest_sessions(os.path.basename(session_dir))
+    if suggestions:
+        hints.append("Did you mean: " + ", ".join(suggestions))
+    hints.append(_format_available_sessions())
+    hint_text = "\n".join(hints) if hints else ""
     raise RuntimeError(
         f"--session-dir must be a directory, got: {p} "
         "and could not map container path via config run_args."
+        + (f"\n{hint_text}" if hint_text else "")
     )
 
 
@@ -276,6 +344,10 @@ def _sanitize_container_name(name: str) -> str:
 
 
 def main(session_dir, identity=None, force=True, rewrite_formatting=False, auto_identity=True):
+    if not session_dir:
+        print("ERROR: --session-dir is required.\n", file=sys.stderr)
+        print(_format_available_sessions(), file=sys.stderr)
+        raise SystemExit(2)
     if not identity:
         if auto_identity:
             identity = _auto_identity(session_dir)
@@ -297,13 +369,19 @@ def main(session_dir, identity=None, force=True, rewrite_formatting=False, auto_
     print(f"Command which will be run in container: {docker_command}")
     remote_peer_name = _resolve_remote_peer_name(session_dir, identity)
     container_name = _sanitize_container_name(f"com_to_{remote_peer_name}")
-    build_run(
-        override={
-            "run_type": "command",
-            "command": docker_command,
-            "container_name": container_name,
-        }
-    )
+    local_config = get_local_config()
+    override = {
+        "run_type": "command",
+        "command": docker_command,
+        "container_name": container_name,
+    }
+    session_configs_dir = local_config.get("session_configs_dir")
+    if session_configs_dir:
+        run_args = list(local_config.get("run_args", []))
+        run_args.extend(["-e", f"SESSION_CONFIGS_DIR={session_configs_dir}"])
+        override["run_args"] = run_args
+
+    build_run(override=override)
 
     print("Script execution in container completed.")
 
@@ -312,8 +390,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "-s",
         "--session-dir",
-        required=True,
+        required=False,
         help="Directory containing a session config input file (session-definition.yaml / session-parametrization.yaml) and where generated files will be written.",
+    )
+    parser.add_argument(
+        "--list-sessions",
+        action="store_true",
+        help="List available session directories from session_configs_dir and exit.",
     )
     parser.add_argument(
         "--identity",
@@ -335,4 +418,7 @@ if __name__ == "__main__":
     parser.add_argument("--rewrite-formatting", action="store_true")
     parser.set_defaults(force=True, auto_identity=True)
     args = parser.parse_args()
-    main(**{k: v for k, v in vars(args).items() if v is not None})
+    if args.list_sessions:
+        print(_format_available_sessions())
+        raise SystemExit(0)
+    main(**{k: v for k, v in vars(args).items() if v is not None and k != "list_sessions"})
