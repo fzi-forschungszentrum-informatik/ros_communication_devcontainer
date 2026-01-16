@@ -9,7 +9,7 @@ project_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(project_dir)
 
 from ros2docker.stop import main as stop_container
-from run_session_in_container import _load_session_config, _sanitize_container_name
+from run_session_in_container import _auto_identity, _load_session_config, _sanitize_container_name
 
 
 def _get_peer_com_names(session_dir: str) -> dict:
@@ -42,15 +42,15 @@ def _get_peer_com_names(session_dir: str) -> dict:
 
 def _container_names_for_session(session_dir: str, identity: str | None) -> list[str]:
     peer_names = _get_peer_com_names(session_dir)
-    if identity:
-        if identity not in peer_names:
-            raise RuntimeError(f"--identity must be one of peers={list(peer_names.keys())}")
-        remote_peer_key = next(k for k in peer_names.keys() if k != identity)
-        remote_peer_name = peer_names[remote_peer_key]
-        return [_sanitize_container_name(f"com_to_{remote_peer_name}")]
+    if not identity:
+        identity = _auto_identity(session_dir)
+        print(f"Auto-selected identity: {identity}")
 
-    # If identity is not provided, try both possible container names.
-    return sorted({_sanitize_container_name(f"com_to_{v}") for v in peer_names.values()})
+    if identity not in peer_names:
+        raise RuntimeError(f"--identity must be one of peers={list(peer_names.keys())}")
+    remote_peer_key = next(k for k in peer_names.keys() if k != identity)
+    remote_peer_name = peer_names[remote_peer_key]
+    return [_sanitize_container_name(f"com_to_{remote_peer_name}")]
 
 
 def _merge_override(override, container_name: str) -> dict:
