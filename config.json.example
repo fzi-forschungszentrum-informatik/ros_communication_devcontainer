@@ -1,6 +1,5 @@
 {
   "image_name":     "ros-communication",      // Docker image to build
-  "container_name": "ros-communication",      // Name of the running container
 
   // mounts the ws directory into the container. Optionally this ws also contains a ros2src.
   "mount_ws": true,
