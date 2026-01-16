@@ -80,14 +80,34 @@ def main(session_dir, identity=None, config_file=None, override=None):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Stop rosotacom containers derived from a session directory.")
     parser.add_argument(
+        "session_dir_positional",
+        nargs="?",
+        help="Directory containing a session config input file (session-definition.yaml / session-parametrization.yaml).",
+    )
+    parser.add_argument(
         "-s",
         "--session-dir",
-        required=True,
+        required=False,
         help="Directory containing a session config input file (session-definition.yaml / session-parametrization.yaml).",
     )
     parser.add_argument("--identity", required=False)
     parser.add_argument("-f", "--config_file")
     parser.add_argument("-o", "--override")
     args = parser.parse_args()
-    main(**{k: v for k, v in vars(args).items() if v is not None})
+    if args.session_dir and args.session_dir_positional and args.session_dir != args.session_dir_positional:
+        raise SystemExit(
+            f"ERROR: conflicting session dirs: --session-dir={args.session_dir} "
+            f"and positional={args.session_dir_positional}"
+        )
+    if not args.session_dir and args.session_dir_positional:
+        args.session_dir = args.session_dir_positional
+    if not args.session_dir:
+        raise SystemExit("ERROR: --session-dir is required.")
+    main(
+        **{
+            k: v
+            for k, v in vars(args).items()
+            if v is not None and k != "session_dir_positional"
+        }
+    )
 

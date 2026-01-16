@@ -388,6 +388,11 @@ def main(session_dir, identity=None, force=True, rewrite_formatting=False, auto_
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=main.__doc__)
     parser.add_argument(
+        "session_dir_positional",
+        nargs="?",
+        help="Directory containing a session config input file (session-definition.yaml / session-parametrization.yaml) and where generated files will be written.",
+    )
+    parser.add_argument(
         "-s",
         "--session-dir",
         required=False,
@@ -421,4 +426,17 @@ if __name__ == "__main__":
     if args.list_sessions:
         print(_format_available_sessions())
         raise SystemExit(0)
-    main(**{k: v for k, v in vars(args).items() if v is not None and k != "list_sessions"})
+    if args.session_dir and args.session_dir_positional and args.session_dir != args.session_dir_positional:
+        raise SystemExit(
+            f"ERROR: conflicting session dirs: --session-dir={args.session_dir} "
+            f"and positional={args.session_dir_positional}"
+        )
+    if not args.session_dir and args.session_dir_positional:
+        args.session_dir = args.session_dir_positional
+    main(
+        **{
+            k: v
+            for k, v in vars(args).items()
+            if v is not None and k not in {"list_sessions", "session_dir_positional"}
+        }
+    )
