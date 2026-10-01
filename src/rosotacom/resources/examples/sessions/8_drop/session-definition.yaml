@@ -1,0 +1,37 @@
+# 8_drop -- demonstrate OTA send-side drop (N-of-M decimation).
+#
+# The native /drop_demo is published at 10 Hz; `drop: {drop_count: 1, window_size: 2}`
+# drops 1 of every 2 samples before it crosses the OTA link, so the delivered rate
+# is ~5 Hz. The contract asserts the *decimated* rate (hz 3..7); `expect.smoke_native_hz`
+# drives the synthetic source faster (10 Hz) than the rate it asserts -- the smoke's
+# default source rate is derived from the asserted bounds, which only fits
+# rate-preserving topics, so a rate-changing feature must state its native rate.
+#
+# Why drop: shed load on a constrained OTA link by sending only every Nth sample of
+# a high-rate topic that does not need full fidelity remotely.
+
+peers:
+  a: {}
+  b: {}
+
+peer_settings:
+  a:
+    domain_id: 46
+  b:
+    domain_id: 47
+
+shared:
+  use_status_overview: true
+  rmw: cyclone
+  ota_domain_id: 48
+
+topics:
+  b_to_a:
+    - topic: "/drop_demo"
+      type: "std_msgs/msg/String"
+      processing:
+        drop: { drop_count: 1, window_size: 2 }
+      expect:
+        # Source publishes at 10 Hz (below); drop 1-of-2 -> ~5 Hz delivered.
+        smoke_native_hz: 10
+        hz: { min: 3, max: 7 }

@@ -1,0 +1,21 @@
+{
+  "container_name": "machine_a_logic",
+  "image_name": "rosotacom-native-chatter",
+
+  "run_type": "command",
+  "command": "/wait_for_echo_topic.sh",
+
+
+  "run_args": [
+    "--network", "host",
+    "-v", "./wait_for_echo_topic.sh:/wait_for_echo_topic.sh",
+    "-e", "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp",
+    "-e", "ROS_DOMAIN_ID=46"
+  ],
+
+  "build_args": {
+    "BASE_IMAGE": "ros:kilted-ros-base-noble",
+    "DIGEST": "@sha256:4ca53d5b084bdbe92a7a7d7186f56db6a716a6c7c33ad401ddb0ec82d6e9e479",
+    "APT_PACKAGES": "ros-kilted-rmw-cyclonedds-cpp"
+  }
+}

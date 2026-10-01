@@ -1,0 +1,39 @@
+# 10_restamp -- demonstrate OTA restamp (rewrite header.stamp on send).
+#
+# The synthetic source publishes /restamp_demo (PointStamped) with a deliberately
+# STALE header.stamp (1970). `restamp_if: true` rewrites the stamp to "now" as the
+# message is sent over OTA, so the receiver measures a small, real OTA latency.
+#
+# Why it proves restamp: the contract asserts `latency_ms.max`. The status monitor
+# guards absurd ages (a 50-year-old stamp) to a null latency, and a latency_ms
+# contract FAILS on null -- so this example only goes green BECAUSE restamp made the
+# stamp current. Drop `restamp_if` and the latency assertion can no longer be met.
+#
+# Real use: replayed rosbag data carries the original recording timestamps; restamp
+# makes those replayed messages look current to time-sensitive consumers downstream.
+
+peers:
+  a: {}
+  b: {}
+
+peer_settings:
+  a:
+    domain_id: 46
+  b:
+    domain_id: 47
+
+shared:
+  use_status_overview: true
+  rmw: cyclone
+  ota_domain_id: 48
+
+topics:
+  b_to_a:
+    - topic: "/restamp_demo"
+      type: "geometry_msgs/msg/PointStamped"
+      processing:
+        restamp_if: true
+      expect:
+        hz: { min: 3, max: 7 }
+        # Only satisfiable because restamp makes the (otherwise 1970) stamp current.
+        latency_ms: { max: 800 }

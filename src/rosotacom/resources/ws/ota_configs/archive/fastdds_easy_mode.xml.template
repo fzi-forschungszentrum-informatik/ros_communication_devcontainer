@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dds xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+  <profiles>
+    <participant profile_name="ota_fastdds_easy_mode_bridge" is_default_profile="true">
+      <rtps>
+        <name>ota_fastdds_easy_mode_bridge</name>
+
+        <!-- Fast DDS Easy Mode disables multicast discovery and lets Fast DDS spawn/use
+             a per-host Discovery Server automatically for this domain. -->
+        <easy_mode_ip>#easy_mode_ip</easy_mode_ip>
+
+        <!-- Keep SIMPLE so Easy Mode can upgrade it internally. -->
+        <!-- <builtin>
+          <discovery_config>
+            <discoveryProtocol>SIMPLE</discoveryProtocol>
+          </discovery_config>
+        </builtin> -->
+
+        <!-- Intentionally minimal:
+             Easy Mode already switches discovery to unicast + Discovery Server and sets up
+             its own transport mix for data. For this repo's "99% solution", I would first
+             try it without extra transport forcing and only tighten it if measurements say so.
+
+             Promising but unverified in this repo:
+             - explicit localhost + OTA-IP allowlist transport
+             - ignore_non_matching_locators=true
+             - manual ROS_DISCOVERY_SERVER / ROS_SUPER_CLIENT instead of Easy Mode
+        -->
+      </rtps>
+    </participant>
+  </profiles>
+</dds>

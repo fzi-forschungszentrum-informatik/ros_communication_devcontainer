@@ -1,0 +1,9 @@
+---
+windows:
+  - name: MAIN
+    layout: even-vertical
+    splits:
+      - commands:
+        - ros2 topic hz /costmap/costmap/restamped
+      - commands:
+        - ros2 launch foxglove_bridge foxglove_bridge_launch.xml

@@ -1,0 +1,48 @@
+{
+  "image_name":     "ros-communication",      // Docker image to build
+
+  // rosotacom mounts its packaged runtime workspace into /ws dynamically.
+  "mount_ws": false,
+
+  // Enable X11/Wayland GUI forwarding
+  "enable_gui_forwarding": false,
+
+  // Extra docker run arguments
+  "run_args": [
+    "-e", "ROS_DOMAIN_ID=47",
+    "-e", "BUILD_ROS2WS=1",
+    "--network", "host"
+  ],
+
+  // Forward your local SSH agent into the container
+  "forward_ssh_agent": false,
+
+  // Build-time arguments — defaults shown; override if necessary
+  // Note: We explicitly declare Kilted-specific packages (e.g. ros-kilted-*) instead of
+  // using ros2docker profiles (like 'zenoh') because upstream profiles
+  // are currently ROS Lyrical-oriented. Adoption of profiles will be evaluated when
+  // Kilted-compatible profiles are available upstream.
+  //
+  // The base is ros-base, not desktop-full: 299 MB compressed against 1422 MB,
+  // and nothing here runs a GUI (enable_gui_forwarding is false above). The
+  // e2e suite was run against both to find out what desktop-full had been
+  // providing without anyone declaring it. It named ros-kilted-gps-msgs, for
+  // the gps_msgs/msg/GPSFix the anonymized remote-assist session publishes.
+  //
+  // It could not name ros-kilted-compressed-image-transport, and that one is
+  // why this list is not just an inventory: no e2e session has a /compressed
+  // input topic, so the suite never loaded compressed_sub. A vehicle camera
+  // does, on both ends of the link — the sender republishes compressed to
+  // ffmpeg, the receiver decodes back to the CompressedImage twin. Declaring
+  // ros-kilted-image-transport alone gets you raw and nothing else.
+  //
+  // Add rviz2 or a simulator here if you want them; that is a project's
+  // decision, not a default.
+  "build_args": {
+    "BASE_IMAGE":                    "ros:kilted-ros-base-noble",
+    "DIGEST":                        "@sha256:4ca53d5b084bdbe92a7a7d7186f56db6a716a6c7c33ad401ddb0ec82d6e9e479",
+    "INSTALL_ZENOH":                 "1",
+    "APT_PACKAGES":                  "iputils-ping psmisc net-tools snmp iw nload iftop iproute2 tshark ros-kilted-domain-bridge ros-kilted-rmw-cyclonedds-cpp ros-kilted-rmw-zenoh-cpp ros-kilted-topic-tools ros-kilted-image-transport ros-kilted-compressed-image-transport ros-kilted-ffmpeg-image-transport ros-kilted-ffmpeg-image-transport-msgs ros-kilted-gps-msgs",
+    "PIP_PACKAGES":                  "numpy>=1.26,<2 lz4 pysnmp speedtest-cli psutil zstandard opencv-python"
+  }
+}

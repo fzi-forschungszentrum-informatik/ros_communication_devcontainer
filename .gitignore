@@ -1,9 +1,32 @@
 # ignore local system specific settings
-.devcontainer/devcontainer.json
-data_dict.json
-config.json
-zenoh.json5
+/.devcontainer/devcontainer.json
+/ros2docker.json
+/session-instances/
+/zenoh.json5
 
 # ignore temporary data
 __pycache__
+.coverage
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.venv/
+/artifacts/
+/build/
+/dist/
+coverage.xml
+*.egg-info/
 .session_readonly.yaml
+examples/sessions/**/a/**
+examples/sessions/**/b/**
+examples/sessions/**/a_to_b_topics.txt
+examples/sessions/**/b_to_a_topics.txt
+examples/sessions/**/qos.yaml
+src/rosotacom/resources/examples/sessions/**/a/**
+src/rosotacom/resources/examples/sessions/**/b/**
+src/rosotacom/resources/examples/sessions/**/a_to_b_topics.txt
+src/rosotacom/resources/examples/sessions/**/b_to_a_topics.txt
+src/rosotacom/resources/examples/sessions/**/qos.yaml
+src/rosotacom/resources/examples/session-instances/
+
+time-bins.jsonl

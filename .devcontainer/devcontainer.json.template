@@ -1,7 +1,7 @@
 // See https://containers.dev/implementors/json_reference/
 {
 	"image": "#image_name",
-	"initializeCommand": "./ros2docker/build.py",
+	"initializeCommand": "ros2docker build -f ./ros2docker.json",
 	"postCreateCommand": "/entrypoint.sh",
 	"workspaceMount": "",
 	"workspaceFolder": "/ws",

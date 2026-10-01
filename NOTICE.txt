@@ -1,0 +1,21 @@
+rosotacom publication snapshot
+
+Project-authored code is licensed under BSD-3-Clause.
+Copyright (c) 2024-2026 the rosotacom contributors.
+Authors are identified in individual source files.
+
+These test templates retain Apache-2.0:
+src/rosotacom/resources/ws/ros2src/com_py/test/test_copyright.py
+src/rosotacom/resources/ws/ros2src/com_py/test/test_flake8.py
+src/rosotacom/resources/ws/ros2src/com_py/test/test_pep257.py
+Copyright 2015, 2017 Open Source Robotics Foundation, Inc.
+The license is included in LICENSES/Apache-2.0.txt.
+Local changes are marked in the affected files.
+
+The profiles, frame plan and transit metadata in field-profiles/2026-08
+are CC BY 4.0, not BSD-3-Clause:
+Martin Gontscharow, FZI Research Center for Information Technology, 2026.
+https://creativecommons.org/licenses/by/4.0/
+Source: https://github.com/fzi-forschungszentrum-informatik/ros_communication_devcontainer
+
+External dependencies retain their licenses. See docs/licenses.md.

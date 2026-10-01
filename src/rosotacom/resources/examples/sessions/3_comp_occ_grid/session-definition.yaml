@@ -1,0 +1,43 @@
+peers:
+  a: {}
+  b: {}
+
+peer_settings:
+  a:
+    domain_id: 46
+  b:
+    domain_id: 47
+
+shared:
+  use_topic_monitor: true
+  use_heartbeat: true
+  use_status_overview: true
+  heartbeat:
+    expect:
+      hz: { min: 5, max: 20 }
+      latency_ms: { max: 1000 }
+      loss_pct: { max: 5 }
+  ota_domain_id: 48
+  rmw: fastdds
+
+  qos:
+    defaults:
+      depth: 1
+    for_role:
+      ota_sub:
+        reliability: best_effort
+      ota_pub:
+        reliability: best_effort
+
+topics:
+  b_to_a:
+    - topic: "/costmap/costmap"
+      type: "nav_msgs/msg/OccupancyGrid"
+      processing:
+        restamp_if: true
+        compress: true
+      # Declared behavioral contract: read by the status overview (live warnings)
+      # and asserted by `rosotacom test`. See docs/reference/session-expectations.md.
+      expect:
+        hz: { min: 1, max: 5 }
+        latency_ms: { max: 500 }

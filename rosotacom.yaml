@@ -1,0 +1,12 @@
+# Source-checkout rosotacom example setup.
+#
+# Relative paths are resolved from this file's directory.
+# It is discovered automatically when commands run from this checkout.
+ros2docker_config: src/rosotacom/resources/examples/ros2docker.json
+session_configs_dir:
+  - src/rosotacom/resources/examples/sessions
+scenario_configs_dir:
+  - src/rosotacom/resources/examples/scenarios
+session_instances_dir: session-instances
+profiles: ../profiles/benchmark-profiles.yaml
+benchmarks_dir: ../artifacts/benchmarks

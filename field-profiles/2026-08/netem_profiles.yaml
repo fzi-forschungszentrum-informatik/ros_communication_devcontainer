@@ -1,0 +1,127 @@
+# Fitted network profiles, 2026-08 cellular field campaign.
+#
+# Eleven drive windows of a remote-assistance vehicle on a public 4G/5G uplink in
+# Karlsruhe, Germany, each fitted from the passive recording of its application
+# traffic. Every window gives two profiles:
+#
+#   <key>-steady   one-way delay, jitter and per-packet loss of the steady state
+#   <key>-events   one cycle: the steady state for the fitted mean time between
+#                  events, then one short event
+#
+# Load them with `profiles: <path to this file>` in rosotacom.yaml and select one
+# with `--profile <name>`. The table of windows is in README.md next to this file.
+#
+# Loss is per packet, as netem applies it: the fitted loss rate of one DDS
+# fragment of the size given with each window. A message of n fragments is lost
+# with probability 1-(1-p)^n, the model the rates were fitted with, so use them
+# as they are on a link that fragments at that size. The event rate is fitted
+# on the 100 ms slots that lost a message. No profile sets a loss correlation:
+# netem's correlated loss does not keep the stated rate (`loss 4% 25%` drops
+# about 0.1 % of packets). Burst loss is expressed by the <key>-events timeline;
+# netem's gemodel (network profiles reference) is the alternative. Delay includes the
+# operator-side bridge hop.
+# The uplink rate is not identifiable from a passive recording (the link never
+# saturated), so no profile sets one; the downlink was not fitted.
+# r3 is the window the fit is validated on: replay/ next to this file replays its
+# camera stream through r3-steady and r3-events (README.md, "Replay check").
+
+profiles:
+
+  # r3: 2026-08-17 14:57, Oststadt, ROS 2 Kilted, 1200 B DDS fragments
+  # per-fragment loss (1200 B): steady 0.098 %, event 4.00 %
+  r3-steady:
+    uplink: { delay: 29ms, jitter: 32ms, distribution: paretonormal, loss: 0.098% }
+  r3-events:
+    timeline:
+      - { for: 2.8s, uplink: { delay: 29ms, jitter: 32ms, distribution: paretonormal, loss: 0.098% } }
+      - { for: 0.11s, uplink: { delay: 34ms, jitter: 48ms, loss: 4.00% } }
+
+  # r4a: 2026-08-19 13:20, Campus Ost, ROS 2 Kilted, 1200 B DDS fragments
+  # per-fragment loss (1200 B): steady 0.010 %, event 4.37 %
+  r4a-steady:
+    uplink: { delay: 29ms, jitter: 21ms, distribution: paretonormal, loss: 0.010% }
+  r4a-events:
+    timeline:
+      - { for: 32.9s, uplink: { delay: 29ms, jitter: 21ms, distribution: paretonormal, loss: 0.010% } }
+      - { for: 0.10s, uplink: { delay: 33ms, jitter: 32ms, loss: 4.37% } }
+
+  # r5b: 2026-08-21 run 2, Oststadt, ROS 2 Lyrical, 1024 B DDS fragments
+  # per-fragment loss (1024 B): steady 0.019 %, event 7.02 %
+  r5b-steady:
+    uplink: { delay: 112ms, jitter: 41ms, distribution: paretonormal, loss: 0.019% }
+  r5b-events:
+    timeline:
+      - { for: 15.4s, uplink: { delay: 112ms, jitter: 41ms, distribution: paretonormal, loss: 0.019% } }
+      - { for: 0.11s, uplink: { delay: 119ms, jitter: 62ms, loss: 7.02% } }
+
+  # r5c: 2026-08-21 last run, Oststadt, ROS 2 Lyrical, 1024 B DDS fragments
+  # per-fragment loss (1024 B): steady 0.130 %, event 3.70 %
+  r5c-steady:
+    uplink: { delay: 109ms, jitter: 44ms, distribution: paretonormal, loss: 0.130% }
+  r5c-events:
+    timeline:
+      - { for: 1.8s, uplink: { delay: 109ms, jitter: 44ms, distribution: paretonormal, loss: 0.130% } }
+      - { for: 0.11s, uplink: { delay: 116ms, jitter: 66ms, loss: 3.70% } }
+
+  # r6a: 2026-08-21 17:08, Oststadt, ROS 2 Lyrical, 1024 B DDS fragments
+  # per-fragment loss (1024 B): steady 0.133 %, event 3.49 %
+  r6a-steady:
+    uplink: { delay: 26ms, jitter: 32ms, distribution: paretonormal, loss: 0.133% }
+  r6a-events:
+    timeline:
+      - { for: 1.8s, uplink: { delay: 26ms, jitter: 32ms, distribution: paretonormal, loss: 0.133% } }
+      - { for: 0.11s, uplink: { delay: 34ms, jitter: 49ms, loss: 3.49% } }
+
+  # r6b: 2026-08-21 17:45, Oststadt, ROS 2 Lyrical, 1024 B DDS fragments
+  # per-fragment loss (1024 B): steady 0.113 %, event 3.61 %
+  r6b-steady:
+    uplink: { delay: 26ms, jitter: 21ms, distribution: paretonormal, loss: 0.113% }
+  r6b-events:
+    timeline:
+      - { for: 1.9s, uplink: { delay: 26ms, jitter: 21ms, distribution: paretonormal, loss: 0.113% } }
+      - { for: 0.11s, uplink: { delay: 35ms, jitter: 31ms, loss: 3.61% } }
+
+  # r6c: 2026-08-21 18:07, Oststadt, ROS 2 Lyrical, 1024 B DDS fragments
+  # per-fragment loss (1024 B): steady 0.143 %, event 4.06 %
+  r6c-steady:
+    uplink: { delay: 25ms, jitter: 28ms, distribution: paretonormal, loss: 0.143% }
+  r6c-events:
+    timeline:
+      - { for: 1.6s, uplink: { delay: 25ms, jitter: 28ms, distribution: paretonormal, loss: 0.143% } }
+      - { for: 0.11s, uplink: { delay: 32ms, jitter: 42ms, loss: 4.06% } }
+
+  # r6d: 2026-08-21 18:35, Oststadt, ROS 2 Lyrical, 1024 B DDS fragments
+  # per-fragment loss (1024 B): steady 0.005 %, event 2.27 %
+  r6d-steady:
+    uplink: { delay: 28ms, jitter: 21ms, distribution: paretonormal, loss: 0.005% }
+  r6d-events:
+    timeline:
+      - { for: 83.7s, uplink: { delay: 28ms, jitter: 21ms, distribution: paretonormal, loss: 0.005% } }
+      - { for: 0.10s, uplink: { delay: 56ms, jitter: 32ms, loss: 2.27% } }
+
+  # r6e: 2026-08-21 18:38, Oststadt, ROS 2 Lyrical, 1024 B DDS fragments
+  # per-fragment loss (1024 B): steady 0.127 %, event 3.86 %
+  r6e-steady:
+    uplink: { delay: 26ms, jitter: 21ms, distribution: paretonormal, loss: 0.127% }
+  r6e-events:
+    timeline:
+      - { for: 1.7s, uplink: { delay: 26ms, jitter: 21ms, distribution: paretonormal, loss: 0.127% } }
+      - { for: 0.11s, uplink: { delay: 45ms, jitter: 31ms, loss: 3.86% } }
+
+  # d0926: 2026-08-24 09:26, Oststadt, ROS 2 Lyrical, 1024 B DDS fragments
+  # per-fragment loss (1024 B): steady 0.009 %, event 3.90 %
+  d0926-steady:
+    uplink: { delay: 34ms, jitter: 19ms, distribution: paretonormal, loss: 0.009% }
+  d0926-events:
+    timeline:
+      - { for: 38.9s, uplink: { delay: 34ms, jitter: 19ms, distribution: paretonormal, loss: 0.009% } }
+      - { for: 0.10s, uplink: { delay: 67ms, jitter: 29ms, loss: 3.90% } }
+
+  # d1136: 2026-08-24 11:36, Oststadt, ROS 2 Lyrical, 1024 B DDS fragments
+  # per-fragment loss (1024 B): steady 0.086 %, event 3.70 %
+  d1136-steady:
+    uplink: { delay: 32ms, jitter: 28ms, distribution: paretonormal, loss: 0.086% }
+  d1136-events:
+    timeline:
+      - { for: 2.4s, uplink: { delay: 32ms, jitter: 28ms, distribution: paretonormal, loss: 0.086% } }
+      - { for: 0.11s, uplink: { delay: 39ms, jitter: 41ms, loss: 3.70% } }

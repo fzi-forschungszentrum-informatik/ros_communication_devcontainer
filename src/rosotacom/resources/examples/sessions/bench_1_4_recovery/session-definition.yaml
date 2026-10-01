@@ -1,0 +1,47 @@
+# Benchmark Test 1.4 — Temporal Recovery
+#
+# Outage-and-recovery timeline test: the benchmark driver introduces a
+# network outage (via environment profile) and measures how quickly the
+# middleware recovers message flow.  The b_to_a return topic enables
+# bidirectional recovery measurement.
+
+experimental: true
+local_check: false
+
+peers:
+  a: {}
+  b: {}
+
+peer_settings:
+  a:
+    domain_id: 56
+  b:
+    domain_id: 57
+
+shared:
+  use_topic_monitor: true
+  use_heartbeat: false
+  use_status_overview: true
+  ota_domain_id: 58
+  rmw: cyclone
+
+  qos:
+    defaults:
+      depth: 1
+    for_role:
+      ota_sub:
+        reliability: best_effort
+      ota_pub:
+        reliability: best_effort
+
+topics:
+  a_to_b:
+    - topic: "/bench_recovery"
+      type: "com_msgs/msg/SizedPayload"
+      processing:
+        use_ota_wrapper: true
+  b_to_a:
+    - topic: "/bench_recovery_return"
+      type: "com_msgs/msg/SizedPayload"
+      processing:
+        use_ota_wrapper: true

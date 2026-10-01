@@ -1,0 +1,45 @@
+# Benchmark Test 1.5 — Camera-like Load
+#
+# Simulates a synthetic camera load using a GOP-based size pattern
+# and publish-interval jitter (S1 axis load).
+#
+# Active parameters for sized_publisher:
+# sizes: [43KB, 3KB, 4KB, 4KB, 4KB] (idealized GOP sequence)
+# interval_jitter_ms: 20.0 (stddev of Gaussian noise)
+# interval_jitter_seed: 42
+
+experimental: true
+local_check: false
+
+peers:
+  a: {}
+  b: {}
+
+peer_settings:
+  a:
+    domain_id: 50
+  b:
+    domain_id: 51
+
+shared:
+  use_topic_monitor: true
+  use_heartbeat: false
+  use_status_overview: true
+  ota_domain_id: 52
+  rmw: cyclone
+
+  qos:
+    defaults:
+      depth: 1
+    for_role:
+      ota_sub:
+        reliability: best_effort
+      ota_pub:
+        reliability: best_effort
+
+topics:
+  a_to_b:
+    - topic: "/bench_camera"
+      type: "com_msgs/msg/SizedPayload"
+      processing:
+        use_ota_wrapper: true

@@ -1,0 +1,51 @@
+<CycloneDDS>
+    <Domain>
+        <General>
+            <AllowMulticast>false</AllowMulticast>
+            <Interfaces>
+                <NetworkInterface address="#host_ip"/>
+            </Interfaces>
+            <MulticastRecvNetworkInterfaceAddresses>none</MulticastRecvNetworkInterfaceAddresses>
+            <!-- Strictly below MaxMessageSize, and that is the whole point: an RTPS
+                 message carries headers as well as the fragment, so a fragment of
+                 exactly MaxMessageSize cannot be sent at all. Both were 1200B, which
+                 CycloneDDS 0.10.5 coped with and 11.0.1 does not — under Lyrical no
+                 fragmented sample crossed, silently: the endpoints matched and the
+                 reader never saw a sample, while a sample small enough not to
+                 fragment arrived normally. Measured between two hosts with a 64 kB
+                 sample: 1200/1200 delivers nothing on 11.0.1 and everything on
+                 0.10.5; 1024/1200 delivers on both. The datagram stays inside the
+                 same MTU budget the 1200B was chosen for; only the header room is
+                 added.
+
+                 The default is that 1024B. It is a placeholder rather than a literal
+                 because both values are correct on 0.10.5, so which one a run used is
+                 a property of the session and not of the installed package version:
+                 `shared.rmw.<side>.cyclone.fragment_size`. Asking for one that fills
+                 the datagram is allowed — it is what the Kilted-era link ran — and
+                 get_ota_xml.py says so on stderr rather than refusing. -->
+            <FragmentSize>#fragment_size</FragmentSize>
+            <MaxMessageSize>1200B</MaxMessageSize>
+            <MaxRexmitMessageSize>1200B</MaxRexmitMessageSize>
+        </General>
+
+        <Discovery>
+            <Peers>
+                <!--peer-block--><Peer Address="#peer"/><!--/peer-block-->
+            </Peers>
+            <EnableTopicDiscoveryEndpoints>false</EnableTopicDiscoveryEndpoints>
+            <LeaseDuration>60s</LeaseDuration>
+            <SPDPInterval>#spdp_interval</SPDPInterval>
+        </Discovery>
+
+        <Internal>
+            <SquashParticipants>true</SquashParticipants>
+        </Internal>
+
+        <Tracing>
+            <Verbosity>config</Verbosity>
+            <OutputFile>/tmp/cyclonedds.log</OutputFile>
+            <!-- <PacketCaptureFile>/tmp/cyclonedds.pcap</PacketCaptureFile> -->
+        </Tracing>
+    </Domain>
+</CycloneDDS>

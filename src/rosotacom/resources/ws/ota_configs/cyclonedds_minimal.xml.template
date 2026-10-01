@@ -1,0 +1,9 @@
+<CycloneDDS>
+    <Domain>
+        <General>
+            <Interfaces>
+                <NetworkInterface address="#host_ip"/>
+            </Interfaces>
+        </General>
+    </Domain>
+</CycloneDDS>

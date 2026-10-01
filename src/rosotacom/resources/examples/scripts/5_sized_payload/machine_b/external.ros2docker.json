@@ -1,0 +1,20 @@
+{
+  "container_name": "machine_b_logic",
+
+  "run_type": "catmux",
+  "catmux_file": "/external_session.yaml",
+
+  "run_args": [
+    "--network", "host",
+    "--ipc", "host",
+    "-v", "./external_session.yaml:/external_session.yaml",
+    "-v", "../../../ws:/ws",
+    "-e", "RMW_IMPLEMENTATION=rmw_fastrtps_cpp",
+    "-e", "ROS_DOMAIN_ID=47",
+    "-e", "BUILD_ROS2WS=1"
+  ],
+
+  "build_args": {
+    "BASE_IMAGE":                    "ros:kilted-ros-base-noble"
+  }
+}

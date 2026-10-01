@@ -1,0 +1,89 @@
+{
+  "configById": {
+    "3D!2bp6i2e": {
+      "cameraState": {
+        "perspective": true,
+        "distance": 133.4309567150531,
+        "phi": 0.00005739365936228282,
+        "thetaOffset": 91.6785103635157,
+        "targetOffset": [
+          -61.09409126878021,
+          -144.43074725210758,
+          -5.144936435511258e-17
+        ],
+        "target": [
+          0,
+          0,
+          0
+        ],
+        "targetOrientation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "fovy": 45,
+        "near": 0.5,
+        "far": 5000
+      },
+      "followMode": "follow-pose",
+      "scene": {},
+      "transforms": {},
+      "topics": {
+        "/costmap/costmap": {
+          "visible": true
+        },
+        "/move_base_simple/goal": {
+          "visible": true,
+          "axisScale": 4.2,
+          "type": "arrow",
+          "arrowScale": [
+            2.5,
+            0.4,
+            0.15
+          ]
+        }
+      },
+      "layers": {
+        "grid": {
+          "visible": true,
+          "frameLocked": true,
+          "label": "Grid",
+          "instanceId": "8b9b099d-04d9-4dbf-a09c-0ced170e02a3",
+          "layerId": "foxglove.Grid",
+          "frameId": "map",
+          "size": 10,
+          "divisions": 10,
+          "lineWidth": 1,
+          "color": "#248eff",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      "publish": {
+        "type": "pose",
+        "poseTopic": "/move_base_simple/goal",
+        "pointTopic": "/clicked_point",
+        "poseEstimateTopic": "/initialpose",
+        "poseEstimateXDeviation": 0.5,
+        "poseEstimateYDeviation": 0.5,
+        "poseEstimateThetaDeviation": 0.26179939
+      },
+      "imageMode": {}
+    }
+  },
+  "globalVariables": {},
+  "userNodes": {},
+  "playbackConfig": {
+    "speed": 1
+  },
+  "layout": "3D!2bp6i2e"
+}

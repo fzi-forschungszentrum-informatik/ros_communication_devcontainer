@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+One CycloneDDS configuration for both of a peer's domains, each section scoped
+to the domain it belongs to.
+
+Set it as `shared.rmw.ota.cyclone.config` and leave the local one unset: this
+file already carries the local domain's section, so nothing has to overwrite
+anything.
+
+Why it exists. The two-file arrangement renders a local profile and an OTA
+profile and exports CYCLONEDDS_URI twice, so the second replaces the first and
+every process started after it views the *local* domain through the *OTA*
+profile. On CycloneDDS 0.10.5 that was survivable: participants configured
+differently on one host and one domain still exchanged data. On 11.0.1 they do
+not — they discover each other, announce their endpoints, match, and deliver
+nothing. Measured on one host, one domain, a publisher and a subscriber:
+
+  publisher / subscriber     0.10.5     11.0.1
+  local     / local          12 B       12 B
+  local     / ota            12 B       0
+  ota       / local          12 B       0
+  ota       / ota            12 B       12 B
+
+A session whose relay publishes under one profile and whose bridge subscribes
+under the other therefore hands nothing from the local domain into the OTA
+domain, and the link carries nothing while every stage looks healthy
+(docs/findings/one-domain-two-cyclone-configs-stop-interoperating.md).
+
+Scoping fixes the cause rather than the symptom: the OTA settings apply to the
+OTA domain, the local domain keeps default discovery with room for many
+participants, and one file can be shared by every process on the host.
+
+The two-file arrangement stays exactly as it was — this is an additional
+template, not a replacement, and a session that does not name it is unchanged.
+-->
+<CycloneDDS xmlns="https://cdds.io/config">
+  <!--
+  The OTA domain: interface-pinned, unicast-only, with the datagram caps the
+  provisioned link is sized for. Identical to cyclonedds_tuned.xml except that
+  it says which domain it is for.
+  -->
+  <Domain Id="#ota_domain">
+    <General>
+      <AllowMulticast>false</AllowMulticast>
+      <Interfaces>
+        <NetworkInterface address="#host_ip"/>
+      </Interfaces>
+      <MulticastRecvNetworkInterfaceAddresses>none</MulticastRecvNetworkInterfaceAddresses>
+      <!-- Strictly below MaxMessageSize; see cyclonedds_tuned.xml for what
+           making them equal cost, and for why the number is settable
+           (`shared.rmw.<side>.cyclone.fragment_size`) rather than literal. -->
+      <FragmentSize>#fragment_size</FragmentSize>
+      <MaxMessageSize>1200B</MaxMessageSize>
+      <MaxRexmitMessageSize>1200B</MaxRexmitMessageSize>
+    </General>
+
+    <Discovery>
+      <Peers>
+        <!--peer-block--><Peer Address="#peer"/><!--/peer-block-->
+      </Peers>
+      <EnableTopicDiscoveryEndpoints>false</EnableTopicDiscoveryEndpoints>
+      <LeaseDuration>60s</LeaseDuration>
+      <SPDPInterval>#spdp_interval</SPDPInterval>
+    </Discovery>
+
+    <Internal>
+      <SquashParticipants>true</SquashParticipants>
+    </Internal>
+
+    <Tracing>
+      <Verbosity>config</Verbosity>
+      <OutputFile>/tmp/cyclonedds.log</OutputFile>
+    </Tracing>
+  </Domain>
+
+  <!--
+  The local domain: default discovery, more participants. It pins no interface,
+  disables no multicast and sets no peer list, because intra-host discovery has
+  to keep working — the same reasoning as cyclonedds_local_participants.xml,
+  including why 119 and not higher.
+  -->
+  <Domain Id="#local_domain">
+    <Discovery>
+      <ParticipantIndex>auto</ParticipantIndex>
+      <MaxAutoParticipantIndex>119</MaxAutoParticipantIndex>
+    </Discovery>
+  </Domain>
+</CycloneDDS>

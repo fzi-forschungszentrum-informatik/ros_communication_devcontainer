@@ -1,0 +1,22 @@
+---
+windows:
+  - name: SEND
+    layout: even-vertical
+    splits:
+      - commands:
+        - ros2 run com_py sized_publisher --ros-args -p topic:=/size_test_a -p size:=66000 -p rate:=1.0
+      - commands:
+        - ros2 topic hz /size_test_a
+      - commands:
+        - ros2 topic bw /size_test_a
+      - commands:
+        - ros2 topic delay /size_test_a
+  - name: RECEIVE
+    layout: even-vertical
+    splits:
+      - commands:
+        - ros2 topic hz /size_test_b
+      - commands:
+        - ros2 topic bw /size_test_b
+      - commands:
+        - ros2 topic delay /size_test_b

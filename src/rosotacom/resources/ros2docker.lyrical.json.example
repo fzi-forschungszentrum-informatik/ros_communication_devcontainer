@@ -1,0 +1,37 @@
+{
+  "image_name":     "ros-communication-lyrical", // Separate cache/image namespace from the Kilted default
+
+  // Lyrical is opt-in. Kilted remains rosotacom's default until this complete
+  // configuration and the E2E matrix are intentionally promoted.
+  "profile": "domain-bridge",
+
+  // rosotacom mounts its packaged runtime workspace into /ws dynamically.
+  "mount_ws": false,
+
+  // Enable X11/Wayland GUI forwarding
+  "enable_gui_forwarding": false,
+
+  // Extra docker run arguments
+  "run_args": [
+    "-e", "ROS_DOMAIN_ID=47",
+    "-e", "BUILD_ROS2WS=1",
+    "--network", "host"
+  ],
+
+  // Forward your local SSH agent into the container
+  "forward_ssh_agent": false,
+
+  // Build-time arguments. domain_bridge has no Lyrical binary package yet;
+  // ros2docker's domain-bridge profile builds a pinned upstream revision with
+  // a pinned Lyrical compatibility patch. All other ROS packages stay on APT.
+  //
+  // Resolute ships Python 3.14, which requires NumPy 2; the Kilted config keeps
+  // its existing NumPy 1 constraint and is not changed by this opt-in.
+  "build_args": {
+    "BASE_IMAGE":                    "ros:lyrical-ros-base-resolute",
+    "DIGEST":                        "@sha256:0eea195bb91662a7dfbd6c6b026c209aef1d091e55ce37733e54509580ddf2c8",
+    "INSTALL_ZENOH":                 "1",
+    "APT_PACKAGES":                  "iputils-ping psmisc net-tools snmp iw nload iftop iproute2 tshark ros-lyrical-rmw-cyclonedds-cpp ros-lyrical-rmw-zenoh-cpp ros-lyrical-topic-tools ros-lyrical-image-transport ros-lyrical-compressed-image-transport ros-lyrical-ffmpeg-image-transport ros-lyrical-ffmpeg-image-transport-msgs ros-lyrical-gps-msgs",
+    "PIP_PACKAGES":                  "numpy>=2,<3 lz4 pysnmp speedtest-cli psutil zstandard opencv-python"
+  }
+}

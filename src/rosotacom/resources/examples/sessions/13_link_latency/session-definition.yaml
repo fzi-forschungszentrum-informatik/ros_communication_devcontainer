@@ -1,0 +1,42 @@
+# 13_link_latency -- demonstrate TRUE OTA link latency for a HEADERLESS topic.
+#
+# /link_latency_demo is a plain String: it has no header.stamp, so the monitor
+# normally cannot measure its latency at all. `use_ota_wrapper` wraps it into an
+# OtaStamped message whose header.stamp the relay sets to the SEND time -- an
+# out-of-band "send-time sidecar". On the receiver that OtaStamped is observed at
+# the `com_in` stage, where the echo-derived clock offset corrects send -> receive
+# OTA latency independently of any payload header.
+#
+# Why: lets you put a latency SLA on command/telemetry topics that carry no
+# timestamp of their own, and isolates link latency from payload-stamp age.
+
+peers:
+  a: {}
+  b: {}
+
+peer_settings:
+  a:
+    domain_id: 46
+  b:
+    domain_id: 47
+
+shared:
+  use_heartbeat: true
+  use_status_overview: true
+  link_trace:
+    enabled: true
+    interval_s: 1.0
+  rmw: cyclone
+  ota_domain_id: 48
+
+topics:
+  b_to_a:
+    - topic: "/link_latency_demo"
+      type: "std_msgs/msg/String"
+      processing:
+        use_ota_wrapper: true
+      expect:
+        hz: { min: 2 }
+        # The String is headerless; the OTA wrapper's send-time (in the OtaStamped
+        # header at com_in plus echo offset correction makes OTA latency assertable.
+        latency_ms: { max: 2000, stage: com_in }

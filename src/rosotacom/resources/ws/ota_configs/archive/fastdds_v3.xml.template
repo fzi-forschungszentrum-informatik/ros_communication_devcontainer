@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+
+  <transport_descriptors>
+    <transport_descriptor>
+      <transport_id>udp_transport</transport_id>
+      <type>UDPv4</type>
+      <interfaceWhiteList>
+        <address>#host_ip</address>
+      </interfaceWhiteList>
+    </transport_descriptor>
+  </transport_descriptors>
+
+  <participant profile_name="unicast_participant" is_default_profile="true">
+    <rtps>
+
+      <!-- Disable multicast -->
+      <builtin>
+        <metatrafficUnicastLocatorList>
+          <locator>
+            <udpv4>
+              <address>#host_ip</address>
+              <port>0</port>
+            </udpv4>
+          </locator>
+        </metatrafficUnicastLocatorList>
+
+        <initialPeersList>
+          <!-- equivalent to Cyclone <Peers> -->
+          <!--peer-block--><locator>
+            <udpv4>
+              <address>#peer</address>
+              <port>0</port>
+            </udpv4>
+          </locator><!--/peer-block-->
+        </initialPeersList>
+      </builtin>
+
+      <!-- Force custom transport -->
+      <userTransports>
+        <transport_id>udp_transport</transport_id>
+      </userTransports>
+      <useBuiltinTransports>false</useBuiltinTransports>
+
+    </rtps>
+  </participant>
+
+</profiles>

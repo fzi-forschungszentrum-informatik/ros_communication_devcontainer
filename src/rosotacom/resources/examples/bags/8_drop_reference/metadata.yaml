@@ -1,0 +1,17 @@
+rosbag2_bagfile_information:
+  version: 5
+  storage_identifier: mcap
+  duration:
+    nanoseconds: 10000000000
+  starting_time:
+    nanoseconds_since_epoch: 0
+  message_count: 101
+  topics_with_message_count:
+    - topic_metadata:
+        name: /drop_demo
+        type: std_msgs/msg/String
+        serialization_format: cdr
+        offered_qos_profiles:
+          - reliability: reliable
+            durability: volatile
+      message_count: 101

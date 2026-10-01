@@ -1,0 +1,37 @@
+peers:
+  a: {}
+  b: {}
+
+peer_settings:
+  a:
+    domain_id: 46
+    # inbound:
+    #   keep_source_prefix: true
+  b:
+    domain_id: 47
+    # inbound:
+    #   keep_source_prefix: true
+
+shared:
+  use_heartbeat: true
+  heartbeat:
+    # The heartbeat's intended behavior. The status overview classifies the live
+    # heartbeat against it (status.json `quality`/`reason`) and `rosotacom test`
+    # asserts it. See docs/reference/session-expectations.md.
+    expect:
+      hz: { min: 5, max: 20 }
+      latency_ms: { max: 1000 }
+      loss_pct: { max: 5 }
+  # Maintain a continuously-updated per-topic pipeline status overview
+  # (status.json / status.txt / events.jsonl under logs/<peer>/status/).
+  # OTA stages are graph-only; this does not add OTA payload subscriptions.
+  # Inspect it from the host with: rosotacom status 1_heartbeat_status
+  use_status_overview: true
+  rmw:
+    local:
+      cyclone:
+        config: cyclonedds_minimal.xml
+    ota:
+      cyclone:
+        config: cyclonedds_minimal.xml
+  ota_domain_id: 48

@@ -1,6 +1,6 @@
 # Terminology
 
-This document defines the canonical terminology used throughout this project.  
+This document defines the canonical terminology used throughout this project.
 All contributors **MUST** use the terms defined here. Synonyms are explicitly discouraged.
 
 The terminology separates **orthogonal concerns**:
@@ -15,16 +15,16 @@ The terminology separates **orthogonal concerns**:
 ## 1. Peers and sessions
 
 ### Peer
-A **peer** is a communication participant.  
+A **peer** is a communication participant.
 Peers are symmetric and may both send and receive messages.
 
-> The term *peer* is used exclusively.  
+> The term *peer* is used exclusively.
 > Terms such as *actor*, *participant*, *partner*, or *node* are not used.
 
 ---
 
 ### Local peer
-The **local peer** is the peer on which a given session instance is running  
+The **local peer** is the peer on which a given session instance is running
 (i.e. “this machine / this ROS graph”).
 
 ---
@@ -47,7 +47,7 @@ A **session instance** is a concrete runtime instantiation of a session on a pee
 ---
 
 ### Session runtime
-A **session runtime** is the software runtime that implements a session instance on a peer  
+A **session runtime** is the software runtime that implements a session instance on a peer
 (e.g. App Relay + OTA Bridge and their configuration/orchestration).
 
 In this repository, the session runtime is typically executed inside a Docker container started via `rosotacom`.
@@ -90,7 +90,7 @@ A **peer directory** is the per-peer subdirectory inside a session directory:
 
 `<session_dir>/<peer_key>/`
 
-It contains **only** peer-specific generated session configuration artifacts  
+It contains **only** peer-specific generated session configuration artifacts
 (e.g. `plugin.yaml`, `session_specification.yaml`, optional compression/decompression configs, ...).
 
 ---
@@ -305,6 +305,9 @@ Notes:
 - Preprocessing/postprocessing are just processing stages applied at different points:
   - outbound: native → processed (optional)
   - inbound: processed → native (optional)
+- Being postprocessing does **not** by itself make a transformation a processing
+  stage of this project. Which transformations belong here is decided by
+  §9.1, not by where or when they run.
 
 ---
 
@@ -322,6 +325,57 @@ Example: `/com/out/A/to_B/sensors/camera/image_raw/restamped/max20hz/bz2`
 ---
 
 ## 9. Module responsibilities
+
+### 9.1 Stage ownership (which transformations belong to this project)
+
+A **processing stage** (§7) belongs to this project when it either
+
+1. **undoes a stage this project applied** — decompression undoes compression,
+   the OTA unwrapper undoes the OTA wrapper, `global_to_local` undoes
+   `local_to_global`, `trickle` undoes `latch`; or
+2. **compensates for the medium** — the playout pacer against the arrival
+   jitter a link introduces.
+
+Everything else that happens to a stream after the inbound native topic
+belongs to whoever consumes it, and is that consumer's code in that
+consumer's repository. The inbound native topic (§3) is where this project's
+canonical lifecycle ends, and stage ownership ends with it.
+
+**Two criteria that do not decide it**, because both are true of stages on
+either side:
+
+- *Where it runs.* Decompression, the unwrapper, `trickle` and the pacer all
+  run at the receiving peer. So does an application transform that has nothing
+  to do with the link.
+- *That it is postprocessing.* §3 names inbound postprocessing as part of the
+  lifecycle, so the word describes a position, not an owner.
+
+`trickle` is the stage that makes the boundary feel ambiguous, and rule 1
+resolves it. It can be read as a fix for a consumer that expects a periodic
+stream — but the question is not what it is good for, it is why the value was
+latched in the first place: repeating a state at a fixed rate over a metered
+link is waste, so latching is a link decision and `trickle` is its inverse.
+Without the link there would be nothing to un-latch.
+
+**The quick test is a counterfactual.** Change the *link* — other radio, other
+route, other codec — and ask whether the stage has to change; then change the
+*consumer* — other display, other viewer, an automated pipeline instead of a
+person — and ask the same. A stage that survives every link change and breaks
+on a consumer change is the consumer's.
+
+**The falsifiable test, for cases the counterfactual leaves open.** A stage
+here becomes part of the session contract, so it must carry an `expect:` the
+harness can assert. If no `hz`, `loss_pct`, `latency_ms` or
+`completeness.vs_bag_ratio` on that stage would mean anything, the contract
+cannot check it — and a stage the contract cannot check does not belong in the
+contract.
+
+This is about **stages, not about code**. A generic operation — resampling an
+image, filtering a point cloud — may live here as a reusable node the day a
+second session needs it. What must not move here is the decision that a
+particular consumer wants a particular result.
+
+---
 
 ### App Relay
 The **App Relay** (application relay) maps between application topics and com topics.
@@ -356,8 +410,3 @@ The OTA Bridge consists of two pub/sub pairs:
 - Topic classes are named explicitly: *application* (native or processed), *native*, *processed*, *com*, *OTA*.
 - All documentation and code comments **must** use these terms.
 - New terminology must not be introduced without updating this file.
-
-
-
-
-

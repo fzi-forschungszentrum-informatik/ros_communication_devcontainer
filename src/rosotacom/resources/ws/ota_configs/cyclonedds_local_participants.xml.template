@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Local-domain CycloneDDS configuration: default discovery, more participants.
+
+Set it as `shared.rmw.local.cyclone.config` (or a peer's `local_config_template`)
+on a machine where many processes share the communication peer's local domain.
+
+Why: Cyclone gives each process one participant index per domain, and its default
+MaxAutoParticipantIndex is 32 - 33 slots per domain per host. A control centre
+spends them faster than that sounds. The processes that start last then lose the
+race, and the error names the domain rather than the cause:
+
+  [46] heartbeat_: Failed to find a free participant index for domain 46
+  [ERROR] [rmw_cyclonedds_cpp]: rmw_create_node: failed to create domain, error Error
+
+On 2026-08-13 that killed the centre's `heartbeat_echo` and one `topic_monitor`
+two seconds after start. catmux left both panes at a shell prompt, so the session
+ran for two hours with no heartbeat publisher: no RTT, no clock-offset estimate,
+and every EchoHeartbeat the far side received carried `echo_valid=false`.
+
+119, not higher: Cyclone's unicast discovery ports are
+7400 + 250*domain + 10 + 2*index, so 119 is the last index whose ports stay
+inside this domain's 250-port block. Index 120 would answer on the next
+domain's ports.
+
+Nothing else is set. This is the *local* domain -- intra-host discovery must keep
+working, so unlike the OTA templates it pins no interface, disables no multicast,
+and sets no peer list.
+-->
+<CycloneDDS xmlns="https://cdds.io/config">
+  <Domain Id="any">
+    <Discovery>
+      <ParticipantIndex>auto</ParticipantIndex>
+      <MaxAutoParticipantIndex>119</MaxAutoParticipantIndex>
+    </Discovery>
+  </Domain>
+</CycloneDDS>

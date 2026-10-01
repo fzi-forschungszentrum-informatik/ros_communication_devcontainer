@@ -1,0 +1,52 @@
+{
+  "created_at": "2026-07-08T15:14:06",
+  "fingerprint": "github-hosted-linux-x86_64",
+  "floor": 0.0,
+  "floor_frac": 0.02,
+  "k": 3.0,
+  "kind": "benchmark-calibration-report",
+  "metrics": {
+    "latency_p50_ms": {
+      "banded": false,
+      "median": 5188.937,
+      "sigma": 449.91870997347957,
+      "values": [
+        5188.937,
+        5633.542,
+        6096.891,
+        5137.839,
+        5003.797
+      ]
+    },
+    "latency_p95_ms": {
+      "banded": false,
+      "median": 8937.733,
+      "sigma": 212.41440959713634,
+      "values": [
+        8723.305,
+        8834.98,
+        8937.733,
+        9234.805,
+        9144.222
+      ]
+    },
+    "loss_pct": {
+      "banded": true,
+      "median": 71.89292543021033,
+      "sigma": 6.089214583798013,
+      "values": [
+        70.83811710677382,
+        69.20374707259953,
+        71.89292543021033,
+        80.90128755364807,
+        82.27459016393442
+      ]
+    }
+  },
+  "profile": "gate-tight",
+  "repeats": 5,
+  "rmw": "cyclone",
+  "row": "probe-loss-tight-cyclone",
+  "schema": 1,
+  "window_s": 60.0
+}

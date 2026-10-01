@@ -1,0 +1,52 @@
+{
+  "created_at": "2026-07-08T15:14:08",
+  "fingerprint": "github-hosted-linux-x86_64",
+  "floor": 0.0,
+  "floor_frac": 0.02,
+  "k": 3.0,
+  "kind": "benchmark-calibration-report",
+  "metrics": {
+    "latency_p50_ms": {
+      "banded": false,
+      "median": 11510.049,
+      "sigma": 253.02704935599286,
+      "values": [
+        11703.881,
+        11127.372,
+        11689.945,
+        11510.049,
+        11284.945
+      ]
+    },
+    "latency_p95_ms": {
+      "banded": false,
+      "median": 11769.198,
+      "sigma": 18.98521913226183,
+      "values": [
+        11770.297,
+        11727.698,
+        11772.224,
+        11769.198,
+        11751.313
+      ]
+    },
+    "loss_pct": {
+      "banded": true,
+      "median": 58.01338846229573,
+      "sigma": 3.3212800810705954,
+      "values": [
+        56.874265569917746,
+        58.01338846229573,
+        59.77838258164852,
+        52.08087768610028,
+        60.487422922580016
+      ]
+    }
+  },
+  "profile": "gate-tight",
+  "repeats": 5,
+  "rmw": "fastdds",
+  "row": "probe-loss-tight-fastdds",
+  "schema": 1,
+  "window_s": 60.0
+}

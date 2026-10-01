@@ -1,0 +1,28 @@
+{
+  "created_at": "2026-07-08T15:14:07",
+  "fingerprint": "github-hosted-linux-x86_64",
+  "floor": 0.0,
+  "floor_frac": 0.02,
+  "k": 3.0,
+  "kind": "benchmark-calibration-report",
+  "metrics": {
+    "capacity_size": {
+      "banded": true,
+      "median": 6116.0,
+      "sigma": 4.8166378315169185,
+      "values": [
+        6123.0,
+        6125.0,
+        6116.0,
+        6115.0,
+        6115.0
+      ]
+    }
+  },
+  "profile": "gate-tight",
+  "repeats": 5,
+  "rmw": "cyclone",
+  "row": "capacity-size-tight-cyclone",
+  "schema": 1,
+  "window_s": 10.0
+}

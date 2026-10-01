@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Local-domain Fast DDS configuration: pin the loopback locators, change nothing else.
+
+  This is the Fast DDS counterpart to cyclonedds_local_participants.xml, and it
+  exists because the two stacks fail differently when nothing is configured.
+  CycloneDDS talks between containers on a host out of the box. Fast DDS does
+  not, and the way it fails is quiet: the publisher reports a matched
+  subscriber, the subscriber reports zero messages, and the session's status
+  shows the last stage IDLE with `pub=1` next to it — a pipeline that looks
+  connected and moves nothing.
+
+  Measured on one workstation, 2026-08-19, two containers on `--network host`,
+  84 B at 10 Hz, ~80 samples per run:
+
+    no profile at all .................................. 0 of 80
+    + shared memory off (useBuiltinTransports=false) ... 0 of 80
+    + a unicast initial peer on 127.0.0.1 .............. 0 of 80
+    + explicit unicast locator lists ................... 79 of 80
+    locator lists ALONE, shared memory left on ......... 79 of 80
+    (control) CycloneDDS, no profile ................... 79 of 80
+
+  So the locator lists are the whole fix, and shared memory is a red herring —
+  worth stating because turning SHM off is the obvious first guess and it
+  changes nothing here.
+
+  Why they are load-bearing: with no locator list Fast DDS binds every interface
+  it can enumerate and announces all of them. A developer machine running Docker
+  has dozens of `br-*` bridges, most of them DOWN, and a peer that walks that
+  list can settle on one that carries nothing. Naming 127.0.0.1 makes the
+  announcement match the one path that is certain to work between processes on
+  a shared network namespace.
+
+  Scope, and its one limit: this pins the LOCAL domain, which is host-local by
+  definition, so loopback is enough — and it is more robust than the host's
+  routable address, which depends on which interface is up. It assumes the
+  session's containers share a network namespace (`--network host`, which the
+  ros2docker profiles set). A container on its own bridge network has its own
+  127.0.0.1 and would need its address named here instead.
+
+  Nothing else is set: no interface allowlist, no transport override, no
+  discovery tuning. Unlike the OTA templates this profile is not trying to cross
+  a tunnel.
+-->
+<dds xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+  <profiles>
+    <participant profile_name="rosotacom_fastdds_local" is_default_profile="true">
+      <rtps>
+        <defaultUnicastLocatorList>
+          <locator>
+            <udpv4>
+              <address>127.0.0.1</address>
+              <port>0</port>
+            </udpv4>
+          </locator>
+        </defaultUnicastLocatorList>
+
+        <builtin>
+          <metatrafficUnicastLocatorList>
+            <locator>
+              <udpv4>
+                <address>127.0.0.1</address>
+                <port>0</port>
+              </udpv4>
+            </locator>
+          </metatrafficUnicastLocatorList>
+
+          <initialPeersList>
+            <locator>
+              <udpv4>
+                <address>127.0.0.1</address>
+                <port>0</port>
+              </udpv4>
+            </locator>
+          </initialPeersList>
+        </builtin>
+      </rtps>
+    </participant>
+  </profiles>
+</dds>

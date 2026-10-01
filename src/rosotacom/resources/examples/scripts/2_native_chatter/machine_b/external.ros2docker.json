@@ -1,0 +1,19 @@
+{
+  "container_name": "machine_b_logic",
+  "image_name": "rosotacom-native-chatter",
+
+  "run_type": "command",
+  "command": ["ros2", "topic", "pub", "-r", "1", "/chatter", "std_msgs/String", "data: 'hello from talker'"],
+
+  "run_args": [
+    "--network", "host",
+    "-e", "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp",
+    "-e", "ROS_DOMAIN_ID=47"
+  ],
+
+  "build_args": {
+    "BASE_IMAGE": "ros:kilted-ros-base-noble",
+    "DIGEST": "@sha256:4ca53d5b084bdbe92a7a7d7186f56db6a716a6c7c33ad401ddb0ec82d6e9e479",
+    "APT_PACKAGES": "ros-kilted-rmw-cyclonedds-cpp"
+  }
+}

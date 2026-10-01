@@ -1,0 +1,341 @@
+# The benched set (performance bands reference) — the curated registry of gated benchmark rows.
+#
+# Workflows and the CLI *read* this file; no workflow hardcodes a row list.
+# List rows:   rosotacom benchmark rows [--lane merge-gate|nightly]
+# Run one row: rosotacom benchmark row <id> --rosotacom-config <project>/rosotacom.yaml
+#
+# Curation rules (performance bands reference "honest limits"):
+# - This is a whitelist. Every row carries an operator-visible `reason`;
+#   a matrix nobody can afford to keep green is a monitor with extra steps.
+# - `metrics` are the banded, blocking metrics; prefer bottleneck-dominated ones
+#   (loss, completeness, capacity breakpoints) whose value is pinned by the
+#   emulated profile, not by shared-runner host timing. `monitor` metrics are
+#   recorded in the verdict but never block; latency percentiles stay there
+#   unless a calibration proves they can hold a tight band (performance bands reference).
+# - Gated windows span >= 60 s (2 CycloneDDS SPDP discovery periods) or say why
+#   not in `window_note`.
+# - Seed policy is explicit: random load elements commit their seed here; random
+#   netem elements commit their seed in the profile (contract-tested).
+# - `genre: replay` rows derive their load from a recording and commit that
+#   recording's provenance and whole-bag `expect` fragment. The loader checks the
+#   load against the provenance (cadence, window, mean payload, interval jitter),
+#   so the two cannot drift apart, and `benchmark row` asserts the expect
+#   fragment on every gating run. Only replay rows may land unbanded: their
+#   expect fragment is bag-derived and gates immediately, while a band is a
+#   measurement of the runner class that calibration has to mint.
+# - Row ids key the committed bands in budgets.jsonl: renaming a row is a
+#   recalibration (`rosotacom benchmark calibrate <id> <K runs> --budgets ...`).
+#
+# Profiles are the committed public gate profiles in
+# src/rosotacom/resources/examples/profiles.yaml (plain netem numbers; private
+# per-link calibration data stays in the operator harness).
+
+version: 2
+
+rows:
+  # ------------------------------------------------------------------ #
+  # merge-gate: one minutes-scale row on every PR (performance bands reference)
+  # ------------------------------------------------------------------ #
+  - id: probe-loss-gop-tight-cyclone
+    kind: performance
+    lane: merge-gate
+    reason: >-
+      Per-PR regression row: camera-shaped burst load (GOP keyframe/delta size
+      pattern, seeded interval jitter) at ~0.8x the rate-limited uplink. The
+      keyframe bursts must be absorbed losslessly when the mean rate fits, so a
+      change that breaks clean delivery on a constrained link (QoS, buffering,
+      fragmentation) turns 0% loss into a regression — a sharp, non-flaky
+      signal (calibration: sigma 0.045pp, floor-limited band). Chosen over the
+      steady overload row for the per-PR lane precisely because its band does
+      not depend on the noisy exact overload-loss fraction.
+    rmw: cyclone
+    genre: probe
+    profile: gate-tight
+    duration_s: 60
+    load:
+      size_pattern: 1x12KB+1x2KB+3x3KB
+      rate_hz: 20.0
+      interval_jitter_ms: 20.0
+      interval_jitter_seed: 42
+    metrics: [loss_pct]
+    floors: { loss_pct: 0.5 }
+    monitor: [latency_p50_ms, latency_p95_ms]
+
+  # ------------------------------------------------------------------ #
+  # nightly: default RMW deep (nominal + tight steady + breakpoint)
+  # ------------------------------------------------------------------ #
+  - id: probe-loss-nominal-cyclone
+    kind: performance
+    lane: nightly
+    reason: >-
+      A clean link must stay clean: completeness on the nominal profile catches
+      ambient loss creep that tight-profile rows would mask.
+    rmw: cyclone
+    genre: probe
+    profile: gate-nominal
+    duration_s: 60
+    load: { size: 12000, rate_hz: 20.0 }
+    metrics: [loss_pct]
+    floors: { loss_pct: 0.5 }
+    monitor: [latency_p50_ms, latency_p95_ms]
+
+  - id: probe-loss-tight-cyclone
+    kind: performance
+    lane: nightly
+    reason: >-
+      Steady load at ~2x the emulated uplink capacity: the graceful-shedding
+      gate on the default RMW. Loss stays pinned by the bottleneck (calibration:
+      median ~72%, sigma 6.1pp -> wide but real band); a change that turns
+      graceful shedding into a blackout or a stall leaves the band. Nightly-only
+      because the exact overload-loss fraction is too noisy for a per-PR gate.
+    rmw: cyclone
+    genre: probe
+    profile: gate-tight
+    duration_s: 60
+    load: { size: 12000, rate_hz: 20.0 }
+    metrics: [loss_pct]
+    floors: { loss_pct: 0.5 }
+    monitor: [latency_p50_ms, latency_p95_ms]
+
+  - id: capacity-size-tight-cyclone
+    kind: performance
+    lane: nightly
+    reason: >-
+      The capacity breakpoint (largest payload the tight uplink still carries
+      under the loss/latency oracle) — the headline working-envelope number for
+      the default RMW.
+    rmw: cyclone
+    genre: capacity
+    profile: gate-tight
+    duration_s: 10
+    window_note: >-
+      Capacity probes are deliberately short point checks inside the binary
+      search; the banded metric is the breakpoint pinned by the emulated rate
+      limit, not a windowed statistic of one probe.
+    search: { knob: size, low: 3000, high: 9000, rate_hz: 20.0 }
+    oracle: { max_loss_pct: 5.0, max_latency_ms: 1000.0 }
+    metrics: [capacity_size]
+
+  - id: boundary-loss-18kb20hz-bandwidth-cyclone
+    kind: boundary
+    lane: nightly
+    reason: >-
+      Working-envelope boundary assertion for the public 18 KB @ 20 Hz bandwidth
+      finding: the 3.2 Mbit/s side must stay zero-loss, while the adjacent
+      3.1 Mbit/s side must stay measurably lossy. If the 3.1 Mbit/s side becomes
+      zero-loss, the transport improved past the documented envelope and this row
+      turns happy-red so the bad-side profile and finding are tightened together.
+      This is the deterministic public subset of the finding; jitter boundary
+      rows stay out of the public gate until seeded-random netem is available on
+      the runner class.
+    rmw: cyclone
+    genre: probe
+    profile: finding-3.2mbit
+    duration_s: 60
+    load: { size: 18000, rate_hz: 20.0 }
+    metrics: [loss_pct]
+    floors: { loss_pct: 0.5 }
+    monitor: [latency_p50_ms, latency_p95_ms]
+    boundary:
+      finding: docs/findings/zero-loss-boundaries-18kb-20hz.md
+      bad_profile: finding-3.1mbit
+      good_oracle:
+        loss_pct: { max: 0.5 }
+      failure_signature:
+        loss_pct: { min: 1.0 }
+      next_steps: >-
+        Move the bad-side bandwidth profile below the new zero-loss point, update
+        docs/findings/zero-loss-boundaries-18kb-20hz.md and
+        docs/findings/jitter-loss-bandwidth-latency.md, then ratchet the
+        good-side band printed by the row.
+
+  # ------------------------------------------------------------------ #
+  # nightly: S2 anonymized replay rows
+  #
+  # `genre: replay` means the load is not invented here: every load parameter is
+  # a measurement of the bag named in `replay`, and the loader refuses a row
+  # whose load has drifted away from it. The bags themselves stay in the
+  # operator harness (anonymized S2 material is not public); what is public is
+  # their measured shape and the whole-bag `expect` fragment generated from
+  # them, which `benchmark row` asserts on every gating run.
+  #
+  # These four rows carry no bands yet, deliberately: a band is a measurement of
+  # the runner class and has to be minted by benchmark-calibrate.yml on that
+  # runner class, whereas the expect fragment is bag-derived and asserts from
+  # the day the row lands. The rows therefore gate on delivery now and produce
+  # the spread evidence the calibration PR needs (issue #185, step 2).
+  # ------------------------------------------------------------------ #
+  - id: replay-costmap-nominal-cyclone
+    kind: performance
+    lane: nightly
+    reason: >-
+      S2 costmap replay shape under the clean public profile: the row replays
+      the anonymized costmap bag's 10 Hz cadence, 8.3 KB mean compressed-grid
+      payload, and 12.7 ms interval jitter, so the nightly gate proves the
+      transport still carries the public single-stream replay load whole. Gated
+      on the whole-bag expect fragment; bands follow from calibration.
+    rmw: cyclone
+    genre: replay
+    profile: gate-nominal
+    duration_s: 140
+    load: { size: 8332, rate_hz: 10.0, interval_jitter_ms: 12.7, interval_jitter_seed: 1501 }
+    replay:
+      source: S2 remote-assist anonymized costmap replay
+      public_example: 15_remote_assist_anonymized_costmap
+      scenario: anonymized_remote_assist_costmap
+      bag_topic: /topic1
+      full_contract_topic: /topic5
+      native_count: 1396
+      native_duration_s: 139.492
+      native_hz: 10.001
+      size_basis: serialized_message_bytes
+      size_mean_bytes: 8331.505
+      size_p90_bytes: 10208
+      interval_std_ms: 12.701
+      expect: { min_count: 1256, completeness_min_ratio: 0.9, vs_bag_ratio: 0.9 }
+    metrics: []
+    monitor: [loss_pct, completeness_pct, latency_p50_ms, latency_p95_ms, payload_bandwidth_bps,
+              delivered_count, delivered_hz]
+
+  - id: replay-costmap-tight-cyclone
+    kind: performance
+    lane: nightly
+    reason: >-
+      S2 costmap replay shape under the rate-limited public profile: the mean
+      payload load is below 1 Mbit/s, so a buffering, QoS, or fragmentation
+      regression that starts dropping this realistic compressed-grid stream
+      turns a clean row red. Gated on the whole-bag expect fragment; bands
+      follow from calibration.
+    rmw: cyclone
+    genre: replay
+    profile: gate-tight
+    duration_s: 140
+    load: { size: 8332, rate_hz: 10.0, interval_jitter_ms: 12.7, interval_jitter_seed: 1502 }
+    replay:
+      source: S2 remote-assist anonymized costmap replay
+      public_example: 15_remote_assist_anonymized_costmap
+      scenario: anonymized_remote_assist_costmap
+      bag_topic: /topic1
+      full_contract_topic: /topic5
+      native_count: 1396
+      native_duration_s: 139.492
+      native_hz: 10.001
+      size_basis: serialized_message_bytes
+      size_mean_bytes: 8331.505
+      size_p90_bytes: 10208
+      interval_std_ms: 12.701
+      expect: { min_count: 1256, completeness_min_ratio: 0.9, vs_bag_ratio: 0.9 }
+    metrics: []
+    monitor: [loss_pct, completeness_pct, latency_p50_ms, latency_p95_ms, payload_bandwidth_bps,
+              delivered_count, delivered_hz]
+
+  - id: replay-camera-nominal-cyclone
+    kind: performance
+    lane: nightly
+    reason: >-
+      S2 ffmpeg camera replay shape under the clean public profile: GOP-shaped
+      packets (one ~43 KB keyframe plus four ~4 KB delta frames at 10 Hz) and
+      measured replay jitter keep keyframe bursts in the regression matrix
+      without exposing any image payload. Gated on the whole-bag expect
+      fragment; bands follow from calibration.
+    rmw: cyclone
+    genre: replay
+    profile: gate-nominal
+    duration_s: 140
+    load: { size_pattern: 1x43KB+4x4KB, rate_hz: 10.0, interval_jitter_ms: 19.7, interval_jitter_seed: 1601 }
+    replay:
+      source: S2 remote-assist anonymized ffmpeg camera replay
+      public_example: 16_remote_assist_anonymized_camera
+      scenario: anonymized_remote_assist_camera
+      bag_topic: /topic1
+      full_contract_topic: /topic9
+      native_count: 1396
+      native_duration_s: 139.507
+      native_hz: 9.999
+      size_basis: ffmpeg_payload_bytes
+      size_mean_bytes: 12398.847
+      size_p90_bytes: 42300
+      interval_std_ms: 19.691
+      keyframes: 285
+      gop_spacing_median_frames: 5
+      keyframe_mean_bytes: 43723.425
+      expect: { min_count: 1256, completeness_min_ratio: 0.9, vs_bag_ratio: 0.9 }
+    metrics: []
+    monitor: [loss_pct, completeness_pct, latency_p50_ms, latency_p95_ms, payload_bandwidth_bps,
+              delivered_count, delivered_hz]
+
+  - id: replay-camera-tight-cyclone
+    kind: performance
+    lane: nightly
+    reason: >-
+      S2 ffmpeg camera replay shape under the tight public profile: the average
+      load fits the 1 Mbit/s uplink but keyframes burst above it, so the row
+      specifically exercises the buffering and fragmentation behavior that a
+      steady-size probe cannot see. Gated on the whole-bag expect fragment;
+      bands follow from calibration.
+    rmw: cyclone
+    genre: replay
+    profile: gate-tight
+    duration_s: 140
+    load: { size_pattern: 1x43KB+4x4KB, rate_hz: 10.0, interval_jitter_ms: 19.7, interval_jitter_seed: 1602 }
+    replay:
+      source: S2 remote-assist anonymized ffmpeg camera replay
+      public_example: 16_remote_assist_anonymized_camera
+      scenario: anonymized_remote_assist_camera
+      bag_topic: /topic1
+      full_contract_topic: /topic9
+      native_count: 1396
+      native_duration_s: 139.507
+      native_hz: 9.999
+      size_basis: ffmpeg_payload_bytes
+      size_mean_bytes: 12398.847
+      size_p90_bytes: 42300
+      interval_std_ms: 19.691
+      keyframes: 285
+      gop_spacing_median_frames: 5
+      keyframe_mean_bytes: 43723.425
+      expect: { min_count: 1256, completeness_min_ratio: 0.9, vs_bag_ratio: 0.9 }
+    metrics: []
+    monitor: [loss_pct, completeness_pct, latency_p50_ms, latency_p95_ms, payload_bandwidth_bps,
+              delivered_count, delivered_hz]
+
+  # ------------------------------------------------------------------ #
+  # nightly: remaining supported RMW variants, shallow (one tight row each)
+  # ------------------------------------------------------------------ #
+  - id: probe-loss-tight-fastdds
+    kind: performance
+    lane: nightly
+    reason: >-
+      Shallow FastDDS coverage: single-datagram payloads at ~2x the tight
+      uplink via rate, so an RMW-specific transport regression cannot hide
+      behind the Cyclone-only gate. Above-MTU payloads are deliberately not
+      used here: FastDDS ships them as one UDP datagram that IP-fragments, and
+      under sustained overload every datagram loses a fragment — a total
+      blackout, which is a finding, not a bandable row.
+    rmw: fastdds
+    genre: probe
+    profile: gate-tight
+    duration_s: 60
+    load: { size: 1200, rate_hz: 200.0 }
+    metrics: [loss_pct]
+    floors: { loss_pct: 0.5 }
+    monitor: [latency_p50_ms, latency_p95_ms]
+
+  - id: probe-loss-tight-zenoh
+    kind: performance
+    lane: nightly
+    reason: >-
+      Shallow Zenoh coverage completing the supported-RMW axis: 12 KB messages
+      at ~0.8x the tight uplink must arrive clean. Deliberately sub-capacity:
+      the initial runner-class calibration measured zenoh's sustained-overload
+      loss as state-dependent (23-61 % across K=5 at 2x, sigma ~15 pp) — that
+      behaviour is a finding to characterize, not a bandable gate (performance bands reference
+      "a flaky gate is worse than none").
+    rmw: zenoh
+    genre: probe
+    profile: gate-tight
+    duration_s: 60
+    load: { size: 4500, rate_hz: 20.0 }
+    metrics: [loss_pct]
+    floors: { loss_pct: 0.5 }
+    monitor: [latency_p50_ms, latency_p95_ms]

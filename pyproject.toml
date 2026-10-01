@@ -1,0 +1,155 @@
+[build-system]
+requires = ["setuptools>=80", "setuptools-scm>=8", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rosotacom"
+description = "Host CLI for ROS OTA communication sessions."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "BSD-3-Clause AND Apache-2.0 AND CC-BY-4.0"
+license-files = ["LICENSE.txt", "LICENSES/*.txt", "NOTICE.txt"]
+authors = [
+  { name = "Martin Gontscharow", email = "gontscharow@fzi.de" },
+]
+keywords = ["ros2", "docker", "teleoperation", "communication", "cli"]
+dependencies = [
+  "argcomplete>=3.6,<4",
+  "mcap>=1.4,<2",
+  "Pillow>=10,<13",
+  "PyYAML>=6",
+  "ros2docker>=0.1.5.dev10,<0.2",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Scientific/Engineering",
+  "Topic :: System :: Networking",
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/fzi-forschungszentrum-informatik/ros_communication_devcontainer"
+Repository = "https://github.com/fzi-forschungszentrum-informatik/ros_communication_devcontainer"
+Issues = "https://github.com/fzi-forschungszentrum-informatik/ros_communication_devcontainer/issues"
+
+[project.optional-dependencies]
+dev = [
+  "build>=1.2",
+  "check-wheel-contents>=0.6",
+  "mypy>=1.14",
+  "pre-commit>=4.0",
+  "pytest>=8.3",
+  "pytest-cov>=6.0",
+  "ruff==0.15.17",
+  "shellcheck-py>=0.10.0",
+  "twine>=6.0",
+  "types-PyYAML>=6.0",
+]
+plots = [
+  "matplotlib>=3.8",
+]
+
+[project.scripts]
+rosotacom = "rosotacom.cli:main"
+
+[tool.setuptools]
+include-package-data = true
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+rosotacom = [
+  "py.typed",
+  "resources/**/*",
+]
+
+[tool.setuptools_scm]
+fallback_version = "0.1.0"
+local_scheme = "no-local-version"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+markers = [
+  "e2e: Docker-backed end-to-end rosotacom tests",
+]
+
+[tool.ruff]
+line-length = 120
+src = ["src/rosotacom", "tests"]
+target-version = "py310"
+exclude = [
+  ".devcontainer",
+  "src/rosotacom/resources",
+]
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["rosotacom"]
+
+[tool.ruff.lint.per-file-ignores]
+# The e2e slice partition is a table of pytest node ids, which have to be
+# verbatim to select anything and run past 120 characters on their own. Folding
+# them would make the table neither readable nor greppable.
+"tests/e2e/conftest.py" = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+mypy_path = "src"
+files = ["src/rosotacom"]
+exclude = [
+  "src/rosotacom/resources",
+]
+check_untyped_defs = true
+disallow_incomplete_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = [
+  "ros2docker.*",
+  "session.*",
+  "matplotlib.*",
+  "mcap.*",
+  "PIL.*",
+]
+ignore_missing_imports = true
+
+[tool.coverage.run]
+branch = true
+source = ["rosotacom"]
+
+[tool.coverage.paths]
+source = [
+  "src/rosotacom",
+  "*/site-packages/rosotacom",
+]
+
+[tool.coverage.report]
+fail_under = 65
+show_missing = true
+skip_covered = true
+exclude_also = [
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
+
+[tool.check-wheel-contents]
+ignore = ["W002", "W004"]
+toplevel = ["rosotacom"]

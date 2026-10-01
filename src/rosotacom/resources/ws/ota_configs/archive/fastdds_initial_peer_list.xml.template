@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+  <participant profile_name="default_participant" is_default_profile="true">
+    <rtps>
+      <builtin>
+        <initialPeersList>
+          <!--peer-block--><locator>
+            <udpv4>
+              <address>#peer</address>
+            </udpv4>
+          </locator><!--/peer-block-->
+          <locator>
+            <udpv4>
+              <address>127.0.0.1</address>
+            </udpv4>
+          </locator>
+        </initialPeersList>
+      </builtin>
+    </rtps>
+  </participant>
+</profiles>

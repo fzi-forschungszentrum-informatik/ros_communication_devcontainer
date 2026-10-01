@@ -1,0 +1,14 @@
+# Copy to deployment.yaml, fill in reachable addresses/SSH targets, and add
+# `deployment: deployment.yaml` to rosotacom.yaml when you want named hosts.
+hosts:
+  machine-a:
+    address: 192.0.2.10
+    ssh: null
+  machine-b:
+    address: 192.0.2.11
+    ssh: robot-b
+
+# Optional scalar values can be referenced from raw address overrides as
+# `value:<key>`. Peer placement should normally use the named hosts above.
+values:
+  example_router: 192.0.2.1

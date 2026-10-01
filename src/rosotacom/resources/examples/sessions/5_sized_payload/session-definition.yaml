@@ -1,0 +1,39 @@
+peers:
+  a: {}
+  b: {}
+
+peer_settings:
+  a:
+    domain_id: 46
+  b:
+    domain_id: 47
+
+shared:
+  use_topic_monitor: true
+  use_heartbeat: false
+  use_status_overview: true
+  ota_domain_id: 48
+  rmw: fastdds
+
+  qos:
+    defaults:
+      depth: 1
+    for_role:
+      ota_sub:
+        reliability: best_effort
+        # lifespan: 0.07
+      ota_pub:
+        reliability: best_effort
+        # lifespan: 0.07
+
+topics:
+  a_to_b:
+    - topic: "/size_test_a"
+      type: "com_msgs/msg/SizedPayload"
+      processing:
+        use_ota_wrapper: true
+  b_to_a:
+    - topic: "/size_test_b"
+      type: "com_msgs/msg/SizedPayload"
+      processing:
+        use_ota_wrapper: true

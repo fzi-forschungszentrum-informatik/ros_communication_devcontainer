@@ -1,0 +1,51 @@
+# Benchmark Test 1.2 — Load Sweep
+#
+# Fixed network profile, varying application load: the benchmark driver
+# sweeps publish rate, active stream count, and payload size.
+# Three independent topic slots allow up to 3 concurrent streams;
+# the driver activates 1–3 as needed via the sized_publisher 'streams'
+# parameter.
+
+experimental: true
+local_check: false
+
+peers:
+  a: {}
+  b: {}
+
+peer_settings:
+  a:
+    domain_id: 50
+  b:
+    domain_id: 51
+
+shared:
+  use_topic_monitor: true
+  use_heartbeat: false
+  use_status_overview: true
+  ota_domain_id: 52
+  rmw: cyclone
+
+  qos:
+    defaults:
+      depth: 1
+    for_role:
+      ota_sub:
+        reliability: best_effort
+      ota_pub:
+        reliability: best_effort
+
+topics:
+  a_to_b:
+    - topic: "/bench_load_0"
+      type: "com_msgs/msg/SizedPayload"
+      processing:
+        use_ota_wrapper: true
+    - topic: "/bench_load_1"
+      type: "com_msgs/msg/SizedPayload"
+      processing:
+        use_ota_wrapper: true
+    - topic: "/bench_load_2"
+      type: "com_msgs/msg/SizedPayload"
+      processing:
+        use_ota_wrapper: true

@@ -1,0 +1,49 @@
+# 7_latched_static -- demonstrate a latched / transient_local topic over OTA.
+#
+# /latched_demo carries an occasionally-changing value (the synthetic source ticks
+# it slowly, 1 Hz). `latch: true` republishes the last value with transient_local
+# durability so it is HELD across the OTA link: a receiver that subscribes late
+# still gets the most recent value instead of waiting for the next change. The
+# contract is `mode: latched` -- it asserts the held value was delivered, NOT a
+# rate (a static topic must not be required to keep ticking).
+#
+# Why latch: site/vehicle/config topics change rarely; sending them on-change (not
+# continuously) saves OTA bandwidth, and transient_local guarantees a late or
+# reconnecting consumer still receives the current value. (remote_assist exercises
+# the full on-change, late-subscriber behaviour on real vehicle data; this public
+# example validates the latch pipeline end-to-end on synthetic data.)
+
+peers:
+  a: {}
+  b: {}
+
+peer_settings:
+  a:
+    domain_id: 46
+  b:
+    domain_id: 47
+
+shared:
+  use_status_overview: true
+  rmw: cyclone
+  ota_domain_id: 48
+
+topics:
+  b_to_a:
+    - topic: "/latched_demo"
+      type: "std_msgs/msg/String"
+      processing:
+        latch: true
+      expect:
+        # Held value delivered at least once; rate is not asserted.
+        mode: latched
+        # Source ticks slowly -- a latched topic publishes on change, not at speed.
+        smoke_native_hz: 1
+      qos:
+        reliability: reliable
+        durability: transient_local
+        for_role:
+          # The native source is volatile/streaming; the latch holds it transient_local.
+          latch_sub: { durability: volatile }
+          # Hold the value at the OTA stage so a late receiver still gets it.
+          ota_pub: { lifespan: 86400.0 }

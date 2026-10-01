@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dds xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+  <profiles>
+    <participant profile_name="rosotacom_fastdds_unicast" is_default_profile="true">
+      <rtps>
+        <defaultUnicastLocatorList>
+          <locator>
+            <udpv4>
+              <address>#host_ip</address>
+              <port>0</port>
+            </udpv4>
+          </locator>
+        </defaultUnicastLocatorList>
+
+        <builtin>
+          <metatrafficUnicastLocatorList>
+            <locator>
+              <udpv4>
+                <address>#host_ip</address>
+                <port>0</port>
+              </udpv4>
+            </locator>
+          </metatrafficUnicastLocatorList>
+
+          <initialPeersList>
+            <locator>
+              <udpv4>
+                <address>#host_ip</address>
+                <port>0</port>
+              </udpv4>
+            </locator>
+            <!--peer-block--><locator>
+              <udpv4>
+                <address>#peer</address>
+                <port>0</port>
+              </udpv4>
+            </locator><!--/peer-block-->
+          </initialPeersList>
+        </builtin>
+
+        <!-- No transport element here, deliberately, and this is load-bearing.
+
+             Measured on a two-container bench (2026-08-19, ROS 2 Kilted, Fast
+             DDS 3.2.4, rmw_fastrtps_cpp 9.3.4): a participant profile that
+             carries *any* transport element transmits every sample twice.
+
+               <userTransports> + <useBuiltinTransports>false   1741 kbit/s
+               <builtinTransports non_blocking="true">UDPv4     1741 kbit/s
+               <builtinTransports>UDPv4                         1741 kbit/s
+               <builtinTransports>DEFAULT                       1741 kbit/s
+               no transport element at all                      1007 kbit/s
+
+             against a 960 kbit/s payload. The DEFAULT row is what settles it:
+             that selection is a no-op — it asks for exactly the built-in set —
+             and it still doubles. Counted per datagram, 366 to the reader's data
+             locator for 180 published samples against 183 without the element,
+             each carrying a full 11 951 B of UDP payload to the same address and
+             port. The reader discards the second copy by sequence number, so it
+             buys nothing and costs half the link.
+
+             What removing it gives up, named rather than hidden:
+               * shared memory is enabled again. It is unused between machines,
+                 and between processes on one host it is faster than the loopback
+                 path this profile also names. fastdds_local.xml records that SHM
+                 was measured and is not the cause of the local-domain failure.
+               * <non_blocking_send>true</non_blocking_send> is gone with the
+                 descriptor, so a full send buffer blocks instead of dropping.
+                 That is the smaller cost: a blocking send stalls the writer for
+                 as long as the link is behind, where the duplicate costs half the
+                 link all the time.
+               * maxInitialPeersRange falls back to 4 from 10, and the interface
+                 allowlist is gone. The locator lists above already pin what this
+                 participant announces, which is what the allowlist was for. -->
+      </rtps>
+    </participant>
+
+    <data_writer profile_name="rosotacom_fastdds_writer" is_default_profile="true">
+      <qos>
+        <data_sharing>
+          <kind>OFF</kind>
+        </data_sharing>
+      </qos>
+    </data_writer>
+
+    <data_reader profile_name="rosotacom_fastdds_reader" is_default_profile="true">
+      <qos>
+        <data_sharing>
+          <kind>OFF</kind>
+        </data_sharing>
+      </qos>
+    </data_reader>
+  </profiles>
+</dds>

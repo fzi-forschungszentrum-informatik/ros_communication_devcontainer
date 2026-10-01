@@ -1,0 +1,32 @@
+{
+  mode: "#zen_mode",
+
+  #zen_endpoint_role: { endpoints: [ "#zen_transport/#zen_main_ip:#zen_main_port" ] },
+
+  plugins:
+  {
+    ros2dds:
+    {
+      domain: #ros_domain_id,
+      // Confine the bridge's DDS side to the loopback interface. The OTA domain
+      // is local plumbing between the com bridges and this zenoh bridge; the
+      // only inter-host transport is zenoh. Without this, both peers' OTA-domain
+      // DDS participants merge over a shared L2 segment (e.g. the smoke docker
+      // bridge), so each heartbeat arrives twice (direct DDS + zenoh) at ~2x rate.
+      ros_localhost_only: true,
+      allow:
+      {
+        publishers: [ "#zen_pub_allow" ],
+        subscribers: [ "#zen_sub_allow" ],
+      }
+    }
+  },
+
+  qos:
+  {
+    publication:
+    [
+#zen_qos_pub
+    ]
+  }
+}

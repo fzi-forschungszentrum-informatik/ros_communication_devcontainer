@@ -1,0 +1,37 @@
+# 9_throttle -- demonstrate OTA send-side throttle (rate cap).
+#
+# The native /throttle_demo is published at 20 Hz; `throttle_hz: 5` caps the rate
+# crossing the OTA link to 5 Hz regardless of how fast the source runs. The
+# contract asserts the capped rate (hz 3..7); `expect.smoke_native_hz` drives the
+# synthetic source well above the cap so the throttle actually has an effect.
+#
+# Throttle vs drop: drop keeps a fixed FRACTION (every Nth sample, so the output
+# rate tracks the input rate), throttle enforces a fixed CEILING (a constant max
+# Hz independent of the input rate). Use throttle to bound link load to an
+# absolute budget; use drop to thin a stream proportionally.
+
+peers:
+  a: {}
+  b: {}
+
+peer_settings:
+  a:
+    domain_id: 46
+  b:
+    domain_id: 47
+
+shared:
+  use_status_overview: true
+  rmw: cyclone
+  ota_domain_id: 48
+
+topics:
+  b_to_a:
+    - topic: "/throttle_demo"
+      type: "std_msgs/msg/String"
+      processing:
+        throttle_hz: 5
+      expect:
+        # Source publishes at 20 Hz (below); throttle caps it to 5 Hz delivered.
+        smoke_native_hz: 20
+        hz: { min: 3, max: 7 }

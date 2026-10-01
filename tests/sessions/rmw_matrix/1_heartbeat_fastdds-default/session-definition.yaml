@@ -1,0 +1,22 @@
+peers:
+  a: {}
+  b: {}
+peer_settings:
+  a:
+    domain_id: 46
+  b:
+    domain_id: 47
+shared:
+  use_heartbeat: true
+  use_status_overview: true
+  heartbeat:
+    expect:
+      hz:
+        min: 5
+        max: 20
+      latency_ms:
+        max: 1000
+      loss_pct:
+        max: 5
+  ota_domain_id: 48
+  rmw: fastdds

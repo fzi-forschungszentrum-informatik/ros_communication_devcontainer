@@ -1,0 +1,59 @@
+# 15_remote_assist_anonymized_costmap -- single-stream cut of
+# 14_remote_assist_anonymized: only /topic5, the anonymized handoff shape of
+# the compressed occupancy-grid stream (bz2 over the serialized grid,
+# carried as com_msgs/msg/CompressedData).
+#
+# Purpose: isolate one heavy stream so its over-the-air behavior (received
+# rate regularity, latency, loss) can be measured without the other 19
+# contract topics competing for the link, and compared 1:1 against the same
+# stream inside example 14. Peers, RMW, OTA QoS, heartbeat/status wiring, and
+# the topic's expect contract are identical to example 14.
+#
+# Pre-send baseline of the source recording (what a looped bag replay feeds
+# in): the original grid is a fixed-size message at a steady 10 Hz (median
+# interval 100 ms, stddev 9 ms, 98% of gaps within +-25% of the period);
+# the bz2 payloads are 5.5-11.0 KiB (mean 8.0 KiB, stddev 1.1 KiB). The
+# packaged smoke drives the contract with a small synthetic CompressedData
+# payload instead; use the `rosotacom anonymize` replay scenario for
+# size-faithful runs.
+
+peers:
+  a: {}
+  b: {}
+
+peer_settings:
+  a:
+    domain_id: 46
+    inbound:
+      keep_source_prefix: true
+  b:
+    domain_id: 47
+
+shared:
+  rmw: cyclone
+  ota_domain_id: 48
+  use_topic_monitor: true
+  use_heartbeat: true
+  use_status_overview: true
+  heartbeat:
+    expect:
+      hz: { min: 5, max: 20 }
+      latency_ms: { max: 1000 }
+      loss_pct: { max: 5 }
+  qos:
+    for_role:
+      ota_sub:
+        depth: 1
+        reliability: best_effort
+        lifespan: 0.7
+      ota_pub:
+        depth: 1
+        reliability: best_effort
+        lifespan: 0.7
+
+topics:
+  b_to_a:
+    - topic: "/topic5"
+      type: "com_msgs/msg/CompressedData"
+      expect:
+        hz: { min: 3, max: 15 }

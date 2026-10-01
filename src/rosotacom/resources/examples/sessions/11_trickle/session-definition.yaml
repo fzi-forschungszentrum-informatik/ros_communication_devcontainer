@@ -1,0 +1,42 @@
+# 11_trickle -- demonstrate receive-side trickle (periodic local re-publish).
+#
+# The source publishes /trickle_demo slowly (1 Hz). On the RECEIVER, `trickle_hz: 4`
+# runs a local timer that re-publishes the last received value to
+# /trickle_demo/trickle, so the delivered output ticks at ~5 Hz (the 1 Hz forwarded
+# on receipt plus the 4 Hz keepalive) -- faster than the source. Nothing extra
+# crosses the OTA link; trickle is purely local to the receiver.
+#
+# Why trickle: visualization / watchdog consumers want a steady stream even for a
+# slow or on-change topic. Trickle keeps the last value "fresh" locally at a fixed
+# rate WITHOUT spending OTA bandwidth re-sending an unchanged value over the link.
+#
+# Note: the asserted stage is the trickle output (/trickle_demo/trickle), now a
+# first-class monitored `native_in` stage -- previously the trickle re-publish was
+# an observability blind spot whose rate could not be asserted.
+
+peers:
+  a: {}
+  b: {}
+
+peer_settings:
+  a:
+    domain_id: 46
+  b:
+    domain_id: 47
+
+shared:
+  use_status_overview: true
+  rmw: cyclone
+  ota_domain_id: 48
+
+topics:
+  b_to_a:
+    - topic: "/trickle_demo"
+      type: "std_msgs/msg/String"
+      processing:
+        trickle_hz: 4
+      expect:
+        # Source ticks at 1 Hz; the receive-side trickle lifts the delivered rate
+        # above it (~5 Hz). min 2 proves trickle added rate beyond the 1 Hz source.
+        smoke_native_hz: 1
+        hz: { min: 2, max: 8 }

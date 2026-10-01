@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Fast DDS on a real OTA link: what `rmw.ota: fastdds` means by default.
+
+  fastdds_unicast.xml pins the locators and stops there, which is enough on a
+  LAN and leaves two things open on a cellular tunnel: a multi-homed host still
+  announces every interface it has, and a participant that starts late is never
+  found. This profile closes both and changes nothing else.
+
+  WHAT IT DELIBERATELY DOES NOT DO — cap the datagram. CycloneDDS carries this
+  link at FragmentSize/MaxMessageSize 1200 B, and the obvious move is to write
+  the same number here. Measured on the bench pair (2026-08-18/19, ROS 2 Kilted,
+  Fast DDS 3.2.4): a `<maxMessageSize>` below the sample size stops the sample
+  from ever arriving, through the whole OTA pipeline, at 1200 B and at 8192 B,
+  with a synchronous writer and with an asynchronous one. An 84 B heartbeat kept
+  flowing at 10 Hz while a 12 kB stream on the same link delivered nothing — the
+  shape that makes this worth a paragraph, because a link that carries the small
+  topics looks alive. Every other knob below was added to the working profile one
+  at a time and measured; only the cap breaks it.
+
+  So Fast DDS here hands a large sample to the kernel as one datagram and lets IP
+  fragment it, where CycloneDDS sends RTPS fragments. That is a real difference
+  in what a lost packet costs and in what the tunnel has to reassemble, not an
+  implementation detail — the measured OpenVPN barrier on this path is around
+  110 kB per message (docs/network-baseline.md).
+-->
+<dds xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+  <profiles>
+    <participant profile_name="rosotacom_fastdds_tuned" is_default_profile="true">
+      <rtps>
+        <defaultUnicastLocatorList>
+          <locator>
+            <udpv4>
+              <address>127.0.0.1</address>
+              <port>0</port>
+            </udpv4>
+          </locator>
+          <locator>
+            <udpv4>
+              <address>#host_ip</address>
+              <port>0</port>
+            </udpv4>
+          </locator>
+        </defaultUnicastLocatorList>
+
+        <builtin>
+          <discovery_config>
+            <leaseDuration>
+              <sec>60</sec>
+            </leaseDuration>
+            <leaseAnnouncement>
+              <sec>10</sec>
+            </leaseAnnouncement>
+          </discovery_config>
+
+          <metatrafficUnicastLocatorList>
+            <locator>
+              <udpv4>
+                <address>127.0.0.1</address>
+                <port>0</port>
+              </udpv4>
+            </locator>
+            <locator>
+              <udpv4>
+                <address>#host_ip</address>
+                <port>0</port>
+              </udpv4>
+            </locator>
+          </metatrafficUnicastLocatorList>
+
+          <initialPeersList>
+            <locator>
+              <udpv4>
+                <address>127.0.0.1</address>
+                <port>0</port>
+              </udpv4>
+            </locator>
+            <locator>
+              <udpv4>
+                <address>#host_ip</address>
+                <port>0</port>
+              </udpv4>
+            </locator>
+            <!--peer-block--><locator>
+              <udpv4>
+                <address>#peer</address>
+                <port>0</port>
+              </udpv4>
+            </locator><!--/peer-block-->
+          </initialPeersList>
+        </builtin>
+
+        <!-- No transport element here, deliberately, and this is load-bearing.
+
+             Measured on a two-container bench (2026-08-19, ROS 2 Kilted, Fast
+             DDS 3.2.4, rmw_fastrtps_cpp 9.3.4): a participant profile that
+             carries *any* transport element transmits every sample twice.
+
+               <userTransports> + <useBuiltinTransports>false   1741 kbit/s
+               <builtinTransports non_blocking="true">UDPv4     1741 kbit/s
+               <builtinTransports>UDPv4                         1741 kbit/s
+               <builtinTransports>DEFAULT                       1741 kbit/s
+               no transport element at all                      1007 kbit/s
+
+             against a 960 kbit/s payload. The DEFAULT row is what settles it:
+             that selection is a no-op — it asks for exactly the built-in set —
+             and it still doubles. Counted per datagram, 366 to the reader's data
+             locator for 180 published samples against 183 without the element,
+             each carrying a full 11 951 B of UDP payload to the same address and
+             port. The reader discards the second copy by sequence number, so it
+             buys nothing and costs half the link.
+
+             What removing it gives up, named rather than hidden:
+               * shared memory is enabled again. It is unused between machines,
+                 and between processes on one host it is faster than the loopback
+                 path this profile also names. fastdds_local.xml records that SHM
+                 was measured and is not the cause of the local-domain failure.
+               * <non_blocking_send>true</non_blocking_send> is gone with the
+                 descriptor, so a full send buffer blocks instead of dropping.
+                 That is the smaller cost: a blocking send stalls the writer for
+                 as long as the link is behind, where the duplicate costs half the
+                 link all the time.
+               * maxInitialPeersRange falls back to 4 from 10, and the interface
+                 allowlist is gone. The locator lists above already pin what this
+                 participant announces, which is what the allowlist was for. -->
+
+        <!-- What the removed descriptor's sendBufferSize/receiveBufferSize were.
+             These are participant-level and asymmetric on purpose: the receive
+             side absorbs a burst that arrives after a stall, the send side
+             should not hold one. -->
+        <sendSocketBufferSize>1048576</sendSocketBufferSize>
+        <listenSocketBufferSize>4194304</listenSocketBufferSize>
+      </rtps>
+    </participant>
+
+    <data_writer profile_name="rosotacom_fastdds_tuned_writer" is_default_profile="true">
+      <qos>
+        <data_sharing>
+          <kind>OFF</kind>
+        </data_sharing>
+      </qos>
+    </data_writer>
+
+    <data_reader profile_name="rosotacom_fastdds_tuned_reader" is_default_profile="true">
+      <qos>
+        <data_sharing>
+          <kind>OFF</kind>
+        </data_sharing>
+      </qos>
+    </data_reader>
+  </profiles>
+</dds>

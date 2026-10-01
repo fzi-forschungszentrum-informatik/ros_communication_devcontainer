@@ -1,0 +1,33 @@
+# 12_content_integrity -- demonstrate byte-level content integrity over OTA.
+#
+# /integrity_demo is a plain pass-through String (no restamp/framebridge/compress),
+# so the payload that crosses the OTA link must arrive byte-identical. The smoke's
+# content-integrity step echoes the delivered topic on the receiver and asserts the
+# `data` field equals exactly what the sender published -- catching silent corruption,
+# truncation, or a wrong (re)serialization that a presence/rate/latency check cannot.
+#
+# Content integrity only applies to pass-through topics: a transformed topic (e.g.
+# restamp rewrites the stamp, framebridge rewrites frames) is intentionally NOT
+# byte-equal, so the smoke restricts the check to untransformed String topics.
+
+peers:
+  a: {}
+  b: {}
+
+peer_settings:
+  a:
+    domain_id: 46
+  b:
+    domain_id: 47
+
+shared:
+  use_status_overview: true
+  rmw: cyclone
+  ota_domain_id: 48
+
+topics:
+  b_to_a:
+    - topic: "/integrity_demo"
+      type: "std_msgs/msg/String"
+      expect:
+        hz: { min: 2 }

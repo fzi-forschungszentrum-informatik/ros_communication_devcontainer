@@ -1,0 +1,61 @@
+# 16_remote_assist_anonymized_camera -- single-stream cut of
+# 14_remote_assist_anonymized: only /topic9, the anonymized handoff shape of
+# the ffmpeg-encoded camera stream (h264 packets, carried as
+# ffmpeg_image_transport_msgs/msg/FFMPEGPacket).
+#
+# Purpose: isolate one heavy stream so its over-the-air behavior (received
+# rate regularity, latency, loss) can be measured without the other 19
+# contract topics competing for the link, and compared 1:1 against the same
+# stream inside example 14. Peers, RMW, OTA QoS, heartbeat/status wiring, and
+# the topic's expect contract are identical to example 14.
+#
+# Pre-send baseline of the source recording (what a looped bag replay feeds
+# in): the native camera stream averages 20 Hz but is markedly irregular
+# (median interval 49 ms, min 7.6 ms, max 157 ms, stddev 17 ms; only ~27% of
+# gaps within +-10% of the median), with 130-250 KiB frames (mean 180 KiB).
+# The pipeline drops every other frame (-> ~10 Hz, inheriting that jitter)
+# and re-encodes at 10 Mbit/s, so handoff packets average ~125 KB with
+# GOP-dependent variance. The packaged smoke drives the contract with a small
+# synthetic FFMPEGPacket instead; use the `rosotacom anonymize` replay
+# scenario for size-faithful runs.
+
+peers:
+  a: {}
+  b: {}
+
+peer_settings:
+  a:
+    domain_id: 46
+    inbound:
+      keep_source_prefix: true
+  b:
+    domain_id: 47
+
+shared:
+  rmw: cyclone
+  ota_domain_id: 48
+  use_topic_monitor: true
+  use_heartbeat: true
+  use_status_overview: true
+  heartbeat:
+    expect:
+      hz: { min: 5, max: 20 }
+      latency_ms: { max: 1000 }
+      loss_pct: { max: 5 }
+  qos:
+    for_role:
+      ota_sub:
+        depth: 1
+        reliability: best_effort
+        lifespan: 0.7
+      ota_pub:
+        depth: 1
+        reliability: best_effort
+        lifespan: 0.7
+
+topics:
+  b_to_a:
+    - topic: "/topic9"
+      type: "ffmpeg_image_transport_msgs/msg/FFMPEGPacket"
+      expect:
+        hz: { min: 3, max: 15 }

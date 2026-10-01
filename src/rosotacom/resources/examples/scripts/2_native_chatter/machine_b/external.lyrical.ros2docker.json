@@ -1,0 +1,19 @@
+{
+  "container_name": "machine_b_logic_lyrical",
+  "image_name": "rosotacom-native-chatter-lyrical",
+
+  "run_type": "command",
+  "command": ["ros2", "topic", "pub", "-r", "1", "/chatter", "std_msgs/String", "data: 'hello from talker'"],
+
+  "run_args": [
+    "--network", "host",
+    "-e", "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp",
+    "-e", "ROS_DOMAIN_ID=47"
+  ],
+
+  "build_args": {
+    "BASE_IMAGE": "ros:lyrical-ros-base-resolute",
+    "DIGEST": "@sha256:0eea195bb91662a7dfbd6c6b026c209aef1d091e55ce37733e54509580ddf2c8",
+    "APT_PACKAGES": "ros-lyrical-rmw-cyclonedds-cpp"
+  }
+}

@@ -1,0 +1,72 @@
+# Synthetic camera-quality probe for offline PSNR/SSIM.
+#
+# This session is not part of the default smoke matrix because it needs the
+# ffmpeg image transport path and metric stage bags. The dedicated e2e test runs
+# it, records the sender's raw stage and receiver's decoded /raw stage, then
+# checks them with `rosotacom videoquality`.
+
+experimental: true
+local_check: false
+
+peers:
+  a: {}
+  b: {}
+
+peer_settings:
+  a:
+    domain_id: 46
+  b:
+    domain_id: 47
+
+shared:
+  rmw: cyclone
+  ota_domain_id: 48
+  use_topic_monitor: true
+  use_heartbeat: true
+  use_status_overview: true
+  metric_backbone:
+    record_stages: true
+  heartbeat:
+    expect:
+      hz: { min: 5, max: 20 }
+      latency_ms: { max: 1000 }
+      loss_pct: { max: 5 }
+  qos:
+    for_role:
+      ota_sub:
+        depth: 1
+        reliability: best_effort
+        lifespan: 0.7
+      ota_pub:
+        depth: 1
+        reliability: best_effort
+        lifespan: 0.7
+
+topics:
+  b_to_a:
+    - topic: "/camera/image"
+      type: "sensor_msgs/msg/Image"
+      processing:
+        transport:
+          type: ffmpeg
+          # `raw` on both sides, because this example measures the codec: PSNR
+          # and SSIM compare pixels, and a JPEG twin would fold its own loss
+          # into the number the example exists to report.
+          local_republish: raw
+          remote_republish: raw
+          gop_size: 4
+          bit_rate: 2000000
+        # Wrapping an encoded stream: the wrapper runs after the encoder, so the
+        # envelope carries the FFMPEGPacket that actually crosses the link, and
+        # the unwrapper republishes onto `/camera/image/ffmpeg` -- the name the
+        # reverse republish already decodes from. Nothing downstream is renamed,
+        # which is what this example proves end to end.
+        use_ota_wrapper: true
+      expect:
+        hz: { min: 3, max: 8 }
+        latency_ms: { max: 1000 }
+        # The bound is the same 30% the video-quality check tolerates on this
+        # synthetic link; the assertion's purpose is that the number exists at
+        # all. Without the wrapper an encoded stream has no per-message
+        # accounting, and `loss_pct` on a topic that cannot report it fails.
+        loss_pct: { max: 30 }

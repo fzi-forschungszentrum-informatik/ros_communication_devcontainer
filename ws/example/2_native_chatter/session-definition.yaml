@@ -1,9 +1,0 @@
-peers:
-  a:
-    ip_key: "machine_a_ip"
-  b:
-    ip_key: "machine_b_ip"
-
-topics:
-  b_to_a:
-    - "/chatter"

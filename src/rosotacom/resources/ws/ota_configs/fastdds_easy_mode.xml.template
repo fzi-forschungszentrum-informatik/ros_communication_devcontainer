@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Fast DDS "easy mode": discovery by Discovery Server instead of multicast.
+
+  Fast DDS 3.1 spawns (or reuses) one Discovery Server per host and points the
+  participant at the peer's server as well, so two hosts find each other with no
+  multicast and no per-participant peer list. It is the answer Fast DDS gives to
+  the problem `fastdds_tuned.xml` solves with `initialPeersList`, and the reason
+  to keep both is that they fail differently: an explicit peer list cannot
+  discover anything it was not told about, while easy mode depends on a server
+  process being reachable on 11811.
+
+  Data transport is NOT discovery, and easy mode does not change it. The
+  transport line below therefore only takes shared memory out of the mix (each
+  container has its own /dev/shm) and makes a full socket buffer drop rather
+  than block the writer. It deliberately does not cap the datagram: measured on
+  the bench pair (2026-08-18/19), a `<max_msg_size>` below the sample size stops
+  the sample from arriving at all — see fastdds_tuned.xml for the measurement.
+
+  `#easy_mode_ip` resolves to the peer's address (override per side with
+  `shared.rmw.{local|ota}.fastdds.easy_mode_ip`).
+-->
+<dds xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+  <profiles>
+    <participant profile_name="rosotacom_fastdds_easy_mode" is_default_profile="true">
+      <rtps>
+        <easy_mode_ip>#easy_mode_ip</easy_mode_ip>
+
+        <builtinTransports sockets_size="1MB" non_blocking="true">UDPv4</builtinTransports>
+      </rtps>
+    </participant>
+
+    <data_writer profile_name="rosotacom_fastdds_easy_mode_writer" is_default_profile="true">
+      <qos>
+        <data_sharing>
+          <kind>OFF</kind>
+        </data_sharing>
+      </qos>
+    </data_writer>
+
+    <data_reader profile_name="rosotacom_fastdds_easy_mode_reader" is_default_profile="true">
+      <qos>
+        <data_sharing>
+          <kind>OFF</kind>
+        </data_sharing>
+      </qos>
+    </data_reader>
+  </profiles>
+</dds>

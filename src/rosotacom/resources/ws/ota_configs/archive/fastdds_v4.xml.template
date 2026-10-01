@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dds xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+  <profiles>
+    <transport_descriptors>
+      <transport_descriptor>
+        <transport_id>ota_udp_transport</transport_id>
+        <type>UDPv4</type>
+
+        <interfaces>
+          <allowlist>
+            <!-- Needed so the bridge participant can still see localhost-only local peers. -->
+            <interface name="127.0.0.1" netmask_filter="OFF"/>
+            <!-- Only the OTA-facing address should be exposed beyond localhost. -->
+            <interface name="#host_ip" netmask_filter="OFF"/>
+          </allowlist>
+        </interfaces>
+
+        <!-- Promising if you want stricter same-subnet routing, but it can get in the way
+             on routed/VPN setups where the "right" next hop is not obvious from netmasks alone.
+        <netmask_filter>ON</netmask_filter>
+        -->
+
+        <!-- Cyclone currently uses a conservative 1200 B OTA config in this repo.
+             I am leaving Fast DDS at its defaults for the 99% case and because the exact
+             fragmentation/buffer tuning depends more on the link than on ROS itself.
+        <maxMessageSize>1200</maxMessageSize>
+        -->
+      </transport_descriptor>
+    </transport_descriptors>
+
+    <participant profile_name="ota_fastdds_bridge" is_default_profile="true">
+      <rtps>
+        <name>ota_fastdds_bridge</name>
+
+        <!-- Deliberately do not use all builtin transports/interfaces.
+             The bridge should have one local path (localhost) and one OTA path only. -->
+        <useBuiltinTransports>false</useBuiltinTransports>
+        <userTransports>
+          <transport_id>ota_udp_transport</transport_id>
+        </userTransports>
+
+        <!-- User-data locators stay narrow as well:
+             - localhost for the local relay/com side
+             - host_ip for the remote OTA bridge side -->
+        <defaultUnicastLocatorList>
+          <locator>
+            <udpv4>
+              <address>127.0.0.1</address>
+            </udpv4>
+          </locator>
+          <locator>
+            <udpv4>
+              <address>#host_ip</address>
+            </udpv4>
+          </locator>
+        </defaultUnicastLocatorList>
+
+        <builtin>
+          <!-- No multicast discovery. The bridge listens only on localhost + OTA IP. -->
+          <metatrafficUnicastLocatorList>
+            <locator>
+              <udpv4>
+                <address>127.0.0.1</address>
+              </udpv4>
+            </locator>
+            <locator>
+              <udpv4>
+                <address>#host_ip</address>
+              </udpv4>
+            </locator>
+          </metatrafficUnicastLocatorList>
+
+          <!-- The bridge actively probes only localhost plus the explicitly allowed peers. -->
+          <initialPeersList>
+            <locator>
+              <udpv4>
+                <address>127.0.0.1</address>
+              </udpv4>
+            </locator>
+            <!--peer-block--><locator>
+              <udpv4>
+                <address>#peer</address>
+              </udpv4>
+            </locator><!--/peer-block-->
+          </initialPeersList>
+        </builtin>
+
+        <!-- Looks promising once both sides announce only the locators we expect.
+             I left it off for now because it can be unforgiving while bringing up mixed setups.
+        <ignore_non_matching_locators>true</ignore_non_matching_locators>
+        -->
+      </rtps>
+    </participant>
+  </profiles>
+</dds>

@@ -1,0 +1,211 @@
+# 14_remote_assist_anonymized -- public replay contract for the private
+# remote_assist OTA scenario.
+#
+# This is the shape produced by `rosotacom anonymize` when it is run on a
+# processed handoff trace recorded from the private remote_assist scenario:
+# original topic names and payloads are replaced by generic /topicN streams, but
+# direction, message type, command target-prefixing, receiver source-prefixing,
+# heartbeat/status behavior, and OTA QoS are retained.
+
+peers:
+  a: {}
+  b: {}
+
+peer_settings:
+  a:
+    domain_id: 46
+    inbound:
+      keep_source_prefix: true
+    outbound:
+      target_prefix:
+        use_target_prefix: true
+  b:
+    domain_id: 47
+
+shared:
+  rmw: cyclone
+  ota_domain_id: 48
+  use_topic_monitor: true
+  use_heartbeat: true
+  use_status_overview: true
+  heartbeat:
+    expect:
+      hz: { min: 5, max: 20 }
+      latency_ms: { max: 1000 }
+      loss_pct: { max: 5 }
+  qos:
+    for_role:
+      ota_sub:
+        depth: 1
+        reliability: best_effort
+        lifespan: 0.7
+      ota_pub:
+        depth: 1
+        reliability: best_effort
+        lifespan: 0.7
+
+topics:
+  a_to_b:
+    - topic: "/topic1"
+      type: "geometry_msgs/msg/PoseStamped"
+      qos:
+        reliability: reliable
+      expect:
+        presence: required
+        mode: latched
+    - topic: "/topic2"
+      type: "std_msgs/msg/Empty"
+      qos:
+        reliability: reliable
+      expect:
+        presence: required
+        mode: stream
+
+  b_to_a:
+    - topic: "/topic3"
+      type: "tf2_msgs/msg/TFMessage"
+      expect:
+        hz: { min: 10 }
+        min_count: 50
+        completeness: { min_ratio: 0.7 }
+
+    - topic: "/topic4"
+      type: "tf2_msgs/msg/TFMessage"
+      expect:
+        mode: latched
+        presence: required
+      qos:
+        reliability: reliable
+        durability: transient_local
+        for_role:
+          ota_pub: { reliability: reliable, durability: transient_local, lifespan: 86400 }
+          ota_sub: { reliability: reliable, durability: transient_local }
+
+    - topic: "/topic5"
+      type: "com_msgs/msg/CompressedData"
+      expect:
+        hz: { min: 3, max: 15 }
+
+    - topic: "/topic6"
+      type: "com_msgs/msg/CompressedData"
+      expect:
+        smoke_probe: false
+        hz: { min: 2 }
+
+    - topic: "/topic7"
+      type: "com_msgs/msg/CompressedData"
+      expect:
+        smoke_probe: false
+        hz: { min: 2 }
+
+    - topic: "/topic8"
+      type: "com_msgs/msg/CompressedData"
+      expect:
+        smoke_probe: false
+        hz: { min: 1 }
+
+    - topic: "/topic9"
+      type: "ffmpeg_image_transport_msgs/msg/FFMPEGPacket"
+      expect:
+        hz: { min: 3, max: 15 }
+
+    - topic: "/topic10"
+      type: "sensor_msgs/msg/CameraInfo"
+      expect:
+        smoke_probe: false
+        hz: { min: 3, max: 15 }
+
+    - topic: "/topic11"
+      type: "sensor_msgs/msg/NavSatFix"
+      expect:
+        smoke_probe: false
+        hz: { min: 10 }
+
+    - topic: "/topic12"
+      type: "std_msgs/msg/String"
+      expect:
+        smoke_probe: false
+        mode: latched
+        presence: required
+      qos:
+        reliability: reliable
+        durability: transient_local
+        for_role:
+          ota_pub: { reliability: reliable, durability: transient_local, lifespan: 86400 }
+          ota_sub: { reliability: reliable, durability: transient_local }
+
+    - topic: "/topic13"
+      type: "gps_msgs/msg/GPSFix"
+      expect:
+        mode: latched
+      qos:
+        reliability: reliable
+        durability: transient_local
+        for_role:
+          latch_sub: { durability: volatile }
+          ota_pub: { lifespan: 86400.0 }
+
+    - topic: "/topic14"
+      type: "geometry_msgs/msg/TwistStamped"
+      expect:
+        smoke_probe: false
+        hz: { min: 3, max: 15 }
+
+    - topic: "/topic15"
+      type: "std_msgs/msg/Float32"
+      expect:
+        smoke_probe: false
+        hz: { min: 3, max: 15 }
+
+    - topic: "/topic16"
+      type: "std_msgs/msg/String"
+      expect:
+        smoke_probe: false
+        mode: latched
+      qos:
+        reliability: reliable
+        durability: transient_local
+        for_role:
+          latch_sub: { durability: volatile }
+          ota_pub: { lifespan: 86400.0 }
+
+    - topic: "/topic17"
+      type: "std_msgs/msg/Float64"
+      expect:
+        hz: { min: 1 }
+
+    - topic: "/topic18"
+      type: "std_msgs/msg/String"
+      expect:
+        smoke_probe: false
+        mode: latched
+      qos:
+        reliability: reliable
+        durability: transient_local
+        for_role:
+          latch_sub: { durability: volatile }
+          ota_pub: { lifespan: 86400.0 }
+
+    - topic: "/topic19"
+      type: "std_msgs/msg/String"
+      expect:
+        smoke_probe: false
+        mode: latched
+      qos:
+        reliability: reliable
+        durability: transient_local
+        for_role:
+          latch_sub: { durability: volatile }
+          ota_pub: { lifespan: 86400.0 }
+
+    - topic: "/topic20"
+      type: "std_msgs/msg/String"
+      expect:
+        smoke_probe: false
+        mode: latched
+      qos:
+        reliability: reliable
+        durability: transient_local
+        for_role:
+          latch_sub: { durability: volatile }
+          ota_pub: { lifespan: 86400.0 }

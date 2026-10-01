@@ -1,0 +1,34 @@
+peers:
+  a: {}
+  b: {}
+
+peer_settings:
+  a:
+    domain_id: 46
+  b:
+    domain_id: 47
+
+shared:
+  use_status_overview: true
+  # Active variant: cyclone shortcut (sets both local and OTA RMW implementations).
+  rmw: cyclone
+  ota_domain_id: 48
+
+  # --- Alternative rmw syntaxes (uncomment one, comment out the others) ---
+  #
+  # fastdds with default config (per-side string form):
+  # rmw:
+  #   local: fastdds
+  #   ota: fastdds
+  #
+  # cyclone with minimal config (per-side tagged-union form):
+  # rmw:
+  #   local: cyclone
+  #   ota:
+  #     cyclone:
+  #       config: cyclonedds_minimal.xml
+
+topics:
+  b_to_a:
+    - topic: "/chatter"
+      type: "std_msgs/msg/String"
